@@ -6,15 +6,18 @@ import (
 
 // User 用户模型
 type User struct {
-	ID              uint      `gorm:"primaryKey" json:"id"`
-	Username        string    `gorm:"uniqueIndex;size:20;not null" json:"username"`
-	Email           string    `gorm:"uniqueIndex;size:100;not null" json:"email"`
-	Password        string    `gorm:"size:255;not null" json:"-"`
-	Nickname        string    `gorm:"size:50" json:"nickname"`
-	Phone           string    `gorm:"size:20" json:"phone"`
-	Avatar          string    `gorm:"size:255" json:"avatar"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID              uint       `gorm:"primaryKey" json:"id"`
+	CinatokenID     uint       `gorm:"uniqueIndex;not null" json:"cinatoken_id"` // CinaToken 用户 ID
+	Username        string     `gorm:"uniqueIndex;size:20;not null" json:"username"`
+	Email           string     `gorm:"uniqueIndex;size:100;not null" json:"email"`
+	Password        string     `gorm:"size:255" json:"-"` // OAuth 用户为空
+	Nickname        string     `gorm:"size:50" json:"nickname"`
+	Phone           string     `gorm:"size:20" json:"phone"`
+	Avatar          string     `gorm:"size:255" json:"avatar"`
+	Provider        string     `gorm:"size:50" json:"provider"` // OAuth 提供商：github/google/microsoft 等
+	Active          bool       `gorm:"default:true" json:"active"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
 	LastLoginAt     *time.Time `json:"last_login_at"`
 	TwoFactorEnabled bool      `gorm:"default:false" json:"two_factor_enabled"`
 }

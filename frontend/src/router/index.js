@@ -15,6 +15,12 @@ const routes = [
     meta: { title: '注册', requiresAuth: false }
   },
   {
+    path: '/oauth/callback',
+    name: 'OAuthCallback',
+    component: () => import('@/views/user/OAuthCallback.vue'),
+    meta: { title: '登录验证', requiresAuth: false }
+  },
+  {
     path: '/',
     component: Layout,
     redirect: '/vms',

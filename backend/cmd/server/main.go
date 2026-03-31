@@ -43,6 +43,7 @@ func main() {
 
 	// 创建处理器
 	authHandler := handler.NewAuthHandler(cfg)
+	oauthHandler := handler.NewOAuthHandler(cfg)
 	vmHandler := handler.NewVMHandler(cfg)
 	mountHandler := handler.NewMountHandler(cfg)
 	openclawHandler := handler.NewOpenClawHandler(cfg)
@@ -50,7 +51,7 @@ func main() {
 	systemHandler := handler.NewSystemHandler(cfg)
 
 	// 注册路由
-	registerRoutes(r, authHandler, vmHandler, mountHandler, openclawHandler, remoteHandler, systemHandler, cfg)
+	registerRoutes(r, authHandler, oauthHandler, vmHandler, mountHandler, openclawHandler, remoteHandler, systemHandler, cfg)
 
 	// 创建 HTTP 服务器
 	srv := &http.Server{
@@ -88,6 +89,7 @@ func main() {
 func registerRoutes(
 	r *gin.Engine,
 	authHandler *handler.AuthHandler,
+	oauthHandler *handler.OAuthHandler,
 	vmHandler *handler.VMHandler,
 	mountHandler *handler.MountHandler,
 	openclawHandler *handler.OpenClawHandler,
@@ -102,7 +104,16 @@ func registerRoutes(
 	// API v1 路由组
 	v1 := r.Group("/api/v1")
 	{
-		// 认证模块（无需登录）
+		// OAuth 认证模块（无需登录）
+		oauth := v1.Group("/oauth")
+		{
+			oauth.GET("/authorize", oauthHandler.OAuthRedirect)
+			oauth.GET("/callback", oauthHandler.OAuthCallback)
+			oauth.GET("/providers", oauthHandler.GetOAuthProviders)
+			oauth.POST("/logout", oauthHandler.Logout)
+		}
+
+		// 传统认证模块（兼容模式，可选）
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register", authHandler.Register)

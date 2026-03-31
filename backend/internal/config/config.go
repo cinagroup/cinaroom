@@ -6,10 +6,19 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	JWT      JWTConfig
-	CORS     CORSConfig
+	Server    ServerConfig
+	Database  DatabaseConfig
+	JWT       JWTConfig
+	CORS      CORSConfig
+	CinaToken CinaTokenConfig
+}
+
+type CinaTokenConfig struct {
+	BaseURL      string
+	ClientID     string
+	ClientSecret string
+	RedirectURI  string
+	Scopes       string
 }
 
 type ServerConfig struct {
@@ -61,6 +70,13 @@ func Load() *Config {
 			AllowOrigins: []string{"*"},
 			AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 			AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
+		},
+		CinaToken: CinaTokenConfig{
+			BaseURL:      getEnv("CINATOKEN_BASE_URL", "https://cinatoken.com"),
+			ClientID:     getEnv("CINATOKEN_CLIENT_ID", ""),
+			ClientSecret: getEnv("CINATOKEN_CLIENT_SECRET", ""),
+			RedirectURI:  getEnv("CINATOKEN_REDIRECT_URI", "http://localhost:3000/oauth/callback"),
+			Scopes:       getEnv("CINATOKEN_SCOPES", "user:read user:email"),
 		},
 	}
 }
