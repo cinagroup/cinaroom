@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cinaroom-config
+  namespace: multipass
+data:
+  # 数据库配置
+  DATABASE_HOST: "postgresql-master.cinatoken.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "cinatoken"
+  DATABASE_SCHEMA: "multipass"
+  
+  # Redis 配置
+  REDIS_HOST: "redis.cinatoken.svc.cluster.local"
+  REDIS_PORT: "6379"
+  
+  # CinaToken OAuth 配置
+  CINATOKEN_OAUTH_URL: "https://cinatoken.com/oauth"
+  CINATOKEN_API_URL: "https://cinatoken.com/api"
+  
+  # 服务配置
+  SERVER_PORT: "8080"
+  SERVER_MODE: "release"  # debug | release
+  
+  # Cloudflare Tunnel 配置
+  CLOUDFLARE_TUNNEL_ID: "pending"
+  CLOUDFLARE_DOMAIN: "cinaroom.run"
+  
+  # 日志配置
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"

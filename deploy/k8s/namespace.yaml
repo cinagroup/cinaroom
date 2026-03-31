@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: multipass
+  labels:
+    app: cinaroom
+    team: cinagroup
+    description: "CinaRoom 虚拟机远程管理平台"

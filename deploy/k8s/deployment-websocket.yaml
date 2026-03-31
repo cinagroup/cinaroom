@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cinaroom-websocket
+  namespace: multipass
+  labels:
+    app: cinaroom
+    component: websocket
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cinaroom
+      component: websocket
+  template:
+    metadata:
+      labels:
+        app: cinaroom
+        component: websocket
+    spec:
+      containers:
+      - name: websocket
+        image: cinagroup/cinaroom-ws:latest
+        imagePullPolicy: Always
+        command: ["/multipass-ws"]
+        workingDir: "/app"
+        ports:
+        - containerPort: 8081
+          name: ws
+        envFrom:
+        - configMapRef:
+            name: cinaroom-config
+        - secretRef:
+            name: cinaroom-secret
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}

@@ -1,0 +1,62 @@
+# Cloudflare Tunnel Configuration
+# 用于将本地服务安全地暴露到公网，无需在用户端配置密钥
+
+version: 2
+tunnel: ${CLOUDFLARE_TUNNEL_ID}
+credentials-file: /etc/cloudflared/creds.json
+
+# 日志配置
+loglevel: info
+logfile: /var/log/cloudflared/tunnel.log
+
+# 服务配置
+ingress:
+  # WebSocket 终端服务
+  - hostname: terminal.${CLOUDFLARE_HOSTNAME}
+    service: http://localhost:8080
+    path: /api/v1/ws/.*
+  
+  # 云端中转服务
+  - hostname: relay.${CLOUDFLARE_HOSTNAME}
+    service: http://localhost:8081
+    path: /api/v1/.*
+  
+  # 健康检查端点
+  - hostname: ${CLOUDFLARE_HOSTNAME}
+    service: http://localhost:8080
+    path: /health
+  
+  - hostname: ${CLOUDFLARE_HOSTNAME}
+    service: http://localhost:8081
+    path: /health
+
+  # 默认返回 404
+  - service: http_status:404
+
+# WebSocket 特定配置
+warp-routing:
+  enabled: true
+
+# 连接配置
+originRequest:
+  # WebSocket 长连接支持
+  noTLSVerify: false
+  disableChunkedEncoding: false
+  
+  # 超时配置
+  connectTimeout: 30s
+  timeout: 300s
+  
+  # 保持连接
+  keepAliveConnections: 100
+  keepAliveTimeout: 300s
+  
+  # HTTP2 支持
+  http2Origin: true
+
+# 访问控制（可选，通过 Cloudflare Access 配置）
+access:
+  - allow:
+      - service_token: ${CLOUDFLARE_SERVICE_TOKEN}
+    require:
+      - valid_service_token: true

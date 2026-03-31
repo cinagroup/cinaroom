@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cinaroom-backend
+  namespace: multipass
+  labels:
+    app: cinaroom
+    component: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cinaroom
+      component: backend
+  template:
+    metadata:
+      labels:
+        app: cinaroom
+        component: backend
+    spec:
+      containers:
+      - name: backend
+        image: cinagroup/cinaroom:latest
+        imagePullPolicy: Always
+        command: ["/multipass-backend"]
+        workingDir: "/app"
+        ports:
+        - containerPort: 8080
+          name: http
+        envFrom:
+        - configMapRef:
+            name: cinaroom-config
+        - secretRef:
+            name: cinaroom-secret
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: logs
+        emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - backend
+              topologyKey: kubernetes.io/hostname

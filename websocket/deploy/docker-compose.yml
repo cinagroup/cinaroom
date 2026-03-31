@@ -1,0 +1,158 @@
+# Docker Compose 配置文件
+# 用于部署 WebSocket 终端和云端中转服务
+
+version: '3.8'
+
+services:
+  # WebSocket 终端服务
+  websocket-terminal:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.terminal
+    container_name: websocket-terminal
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - GIN_MODE=release
+      - CLOUDFLARE_TUNNEL_ID=${CLOUDFLARE_TUNNEL_ID}
+      - CLOUDFLARE_HOSTNAME=${CLOUDFLARE_HOSTNAME}
+      - CLOUDFLARE_SECRET=${CLOUDFLARE_SECRET}
+      - TOKEN_EXPIRY_HOURS=24
+      - SESSION_TIMEOUT_MINUTES=30
+      - MAX_CONNECTIONS=100
+    volumes:
+      - ./logs/terminal:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - multipass-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # 云端中转服务
+  cloud-relay:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.relay
+    container_name: cloud-relay
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - GIN_MODE=release
+      - CLOUDFLARE_TUNNEL_ID=${CLOUDFLARE_TUNNEL_ID}
+      - CLOUDFLARE_HOSTNAME=${CLOUDFLARE_HOSTNAME}
+      - CLOUDFLARE_SECRET=${CLOUDFLARE_SECRET}
+      - TOKEN_EXPIRY_HOURS=24
+      - MAX_CONNECTIONS=1000
+      - BUFFER_SIZE=100
+    volumes:
+      - ./logs/relay:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - multipass-network
+    depends_on:
+      - websocket-terminal
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1024M
+        reservations:
+          cpus: '1.0'
+          memory: 512M
+
+  # Cloudflare Tunnel
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-tunnel
+    restart: unless-stopped
+    command: tunnel --config /etc/cloudflared/config.yml run
+    environment:
+      - CLOUDFLARE_TUNNEL_ID=${CLOUDFLARE_TUNNEL_ID}
+      - CLOUDFLARE_HOSTNAME=${CLOUDFLARE_HOSTNAME}
+    volumes:
+      - ./cloudflared-config.yml:/etc/cloudflared/config.yml:ro
+      - ./cloudflared-creds.json:/etc/cloudflared/creds.json:ro
+      - ./logs/cloudflared:/var/log/cloudflared
+    networks:
+      - multipass-network
+    depends_on:
+      - websocket-terminal
+      - cloud-relay
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  # Nginx 反向代理（可选）
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - multipass-network
+    depends_on:
+      - websocket-terminal
+      - cloud-relay
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+
+  # Redis 用于会话存储（可选，用于集群部署）
+  redis:
+    image: redis:7-alpine
+    container_name: redis-store
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - multipass-network
+    command: redis-server /usr/local/etc/redis/redis.conf
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+networks:
+  multipass-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  redis-data:
+    driver: local
