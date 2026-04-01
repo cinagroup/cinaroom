@@ -1,37 +1,37 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cinaroom-backend
-  namespace: cinaroom
+  name: cinaseek-backend
+  namespace: cinaseek
   labels:
-    app: cinaroom
+    app: cinaseek
     component: backend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: cinaroom
+      app: cinaseek
       component: backend
   template:
     metadata:
       labels:
-        app: cinaroom
+        app: cinaseek
         component: backend
     spec:
       containers:
       - name: backend
-        image: cinagroup/cinaroom:latest
+        image: cinagroup/cinaseek:latest
         imagePullPolicy: Always
-        command: ["/cinaroom-backend"]
+        command: ["/cinaseek-backend"]
         workingDir: "/app"
         ports:
         - containerPort: 8080
           name: http
         envFrom:
         - configMapRef:
-            name: cinaroom-config
+            name: cinaseek-config
         - secretRef:
-            name: cinaroom-secret
+            name: cinaseek-secret
         resources:
           requests:
             cpu: "100m"

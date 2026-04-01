@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) Canonical, Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 3.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Authored by: Chris Townsend <christopher.townsend@canonical.com>
+ *
+ */
+
+#pragma once
+
+#include <cinaclaw/cli/alias_dict.h>
+#include <cinaclaw/cli/command.h>
+
+namespace cinaclaw
+{
+namespace cmd
+{
+class Exec final : public Command
+{
+public:
+    using Command::Command;
+
+    Exec(Rpc::StubInterface& stub, Terminal* term, AliasDict& dict)
+        : Command(stub, term), aliases(dict)
+    {
+    }
+
+    ReturnCodeVariant run(ArgParser* parser) override;
+    std::string name() const override;
+    QString short_help() const override;
+    QString description() const override;
+
+    static ReturnCodeVariant exec_success(const SSHInfoReply& reply,
+                                          const std::optional<std::string>& dir,
+                                          const std::vector<std::string>& args,
+                                          Terminal* term);
+
+private:
+    SSHInfoRequest ssh_info_request;
+    InfoRequest info_request;
+    AliasDict aliases;
+
+    ParseCode parse_args(ArgParser* parser);
+};
+} // namespace cmd
+} // namespace cinaclaw

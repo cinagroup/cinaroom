@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: cinaroom-ingress
-  namespace: cinaroom
+  name: cinaseek-ingress
+  namespace: cinaseek
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: "cloudflare-issuer"
@@ -17,37 +17,37 @@ metadata:
 spec:
   tls:
   - hosts:
-    - cinaroom.run
-    - api.cinaroom.run
-    secretName: cinaroom-tls
+    - cinaseek.run
+    - api.cinaseek.run
+    secretName: cinaseek-tls
   rules:
-  - host: cinaroom.run
+  - host: cinaseek.run
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: cinaroom-frontend
+            name: cinaseek-frontend
             port:
               number: 80
-  - host: api.cinaroom.run
+  - host: api.cinaseek.run
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: cinaroom-backend
+            name: cinaseek-backend
             port:
               number: 8080
-  - host: ws.cinaroom.run
+  - host: ws.cinaseek.run
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: cinaroom-websocket
+            name: cinaseek-websocket
             port:
               number: 8081

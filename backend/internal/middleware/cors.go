@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"cinaroom-backend/internal/config"
+	"github.com/cinagroup/cinaseek/backend/internal/config"
 
 	"github.com/gin-gonic/gin"
 )

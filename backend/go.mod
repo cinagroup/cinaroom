@@ -1,4 +1,4 @@
-module cinaroom-backend
+module github.com/cinagroup/cinaseek/backend
 
 go 1.23
 

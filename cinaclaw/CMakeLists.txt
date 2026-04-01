@@ -1,0 +1,376 @@
+# Copyright (C) Canonical, Ltd.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+cmake_minimum_required(VERSION 3.25)
+cmake_policy(SET CMP0079 NEW) # Allow target_link_libraries() in subdirs
+
+include(feature-flags.cmake)
+include(src/cmake/environment-utils.cmake)
+is_running_in_ci(IS_RUNNING_IN_CI)
+
+option(VCPKG_BUILD_DEFAULT "Enable or disable building the default vcpkg triplet, which includes both debug and release variants." OFF)
+option(MULTIPASS_ENABLE_TESTS "Build tests" ON)
+
+message(STATUS "Running in CI environment? ${IS_RUNNING_IN_CI}")
+
+if(NOT ${IS_RUNNING_IN_CI})
+  include(src/cmake/configure-linker.cmake)
+  configure_linker()
+endif()
+
+cmake_host_system_information(RESULT HOST_OS_NAME QUERY OS_NAME)
+cmake_host_system_information(RESULT HOST_ARCH QUERY OS_PLATFORM)
+
+if ("${HOST_ARCH}" STREQUAL "arm64" OR "${HOST_ARCH}" STREQUAL "aarch64")
+  set(VCPKG_HOST_ARCH "arm64")
+elseif ("${HOST_ARCH}" STREQUAL "s390x")
+  set(VCPKG_HOST_ARCH "s390x")
+elseif ("${HOST_ARCH}" STREQUAL "ppc64le")
+  set(VCPKG_HOST_ARCH "ppc64le")
+else()
+  set(VCPKG_HOST_ARCH "x64")
+endif()
+
+include(CMakeDependentOption)
+cmake_dependent_option(FORCE_ENABLE_VIRTUALBOX "Enable VirtualBox" ON UNIX OFF)
+
+if("${HOST_OS_NAME}" STREQUAL "macOS")
+  # needs to be set before "project"
+  set(VCPKG_HOST_OS "osx")
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "13.3" CACHE STRING "macOS Deployment Target")
+elseif("${HOST_OS_NAME}" STREQUAL "Windows")
+  set(VCPKG_HOST_OS "windows-static-md")
+else()
+  set(VCPKG_HOST_OS "linux")
+endif()
+
+# Use caching option if it's installed
+find_program(SCCACHE_PROGRAM sccache)
+find_program(CCACHE_PROGRAM ccache)
+if(SCCACHE_PROGRAM)
+  set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
+  set(CMAKE_C_COMPILER_LAUNCHER "${SCCACHE_PROGRAM}")
+  if("${HOST_OS_NAME}" STREQUAL "Windows")
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo>:Embedded>")
+    cmake_policy(SET CMP0141 NEW)
+  endif()
+elseif(CCACHE_PROGRAM)
+  set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+  set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+endif()
+
+if(NOT VCPKG_BUILD_DEFAULT)
+  message(STATUS "Will build `vcpkg` dependencies in `release-only` mode.")
+
+  # Propagate macOS deployment target to vcpkg triplet
+  if(APPLE AND DEFINED CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(VCPKG_TRIPLETS_DIR "${CMAKE_CURRENT_BINARY_DIR}/vcpkg-triplets")
+    configure_file(
+      "${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/vcpkg-triplets/osx-release.cmake.in"
+      "${VCPKG_TRIPLETS_DIR}/${VCPKG_HOST_ARCH}-${VCPKG_HOST_OS}-release.cmake"
+      @ONLY
+    )
+    set(VCPKG_OVERLAY_TRIPLETS "${VCPKG_TRIPLETS_DIR}" CACHE STRING "Custom vcpkg triplets directory")
+    message(STATUS "Generated vcpkg triplet: ${VCPKG_HOST_ARCH}-${VCPKG_HOST_OS}-release.cmake with deployment target ${CMAKE_OSX_DEPLOYMENT_TARGET}")
+  endif()
+
+  set(VCPKG_HOST_TRIPLET "${VCPKG_HOST_ARCH}-${VCPKG_HOST_OS}-release")
+  set(VCPKG_TARGET_TRIPLET "${VCPKG_HOST_ARCH}-${VCPKG_HOST_OS}-release")
+else()
+  message(NOTICE "Will build `vcpkg` deps in both `debug` and `release` configurations. Be aware that it will take around twice the time to build the `vcpkg` deps.")
+endif()
+
+message(STATUS "Bootstrapping vcpkg...")
+
+set(MULTIPASS_VCPKG_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/vcpkg" CACHE PATH
+  "Root vcpkg location, where the top bootstrap scripts are located")
+
+set(VCPKG_CMD "${MULTIPASS_VCPKG_LOCATION}/bootstrap-vcpkg.")
+if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+  string(APPEND VCPKG_CMD "bat")
+  list(PREPEND VCPKG_CMD "cmd" "/c") # run in cmd; otherwise, we'd fail when called from PowerShell
+else ()
+  string(APPEND VCPKG_CMD "sh")
+endif ()
+
+# GCC is unreliable on ppc64le and can cause internal compiler errors during vcpkg bootstrap
+set(VCPKG_BOOTSTRAP_ENV)
+if(${VCPKG_HOST_ARCH} STREQUAL "ppc64le")
+  set(VCPKG_BOOTSTRAP_ENV
+    "CC=clang"
+    "CXX=clang++"
+    "CMAKE_C_COMPILER=clang"
+    "CMAKE_CXX_COMPILER=clang++")
+endif()
+
+execute_process(COMMAND ${CMAKE_COMMAND} -E env ${VCPKG_BOOTSTRAP_ENV} ${VCPKG_CMD} RESULT_VARIABLE VCPKG_BOOTSTRAP_RESULT)
+
+if(NOT VCPKG_BOOTSTRAP_RESULT EQUAL 0)
+  message(FATAL_ERROR "Bootstrapping vcpkg failed with exit code: ${VCPKG_BOOTSTRAP_RESULT}")
+else()
+  message(STATUS "Bootstrapping vcpkg completed successfully.")
+endif()
+
+if(MULTIPASS_ENABLE_TESTS)
+  set(VCPKG_MANIFEST_FEATURES "tests" CACHE STRING "Enabled vcpkg features")
+endif()
+
+set(CMAKE_TOOLCHAIN_FILE "${MULTIPASS_VCPKG_LOCATION}/scripts/buildsystems/vcpkg.cmake"
+  CACHE STRING "Vcpkg toolchain file")
+
+project(Cinaseek)
+
+cmake_dependent_option(
+    MULTIPASS_ENABLE_FLUTTER_GUI
+    "Build Flutter GUI"
+    ON
+    "NOT (CMAKE_SYSTEM_PROCESSOR STREQUAL s390x OR CMAKE_SYSTEM_PROCESSOR STREQUAL ppc64le)"
+    OFF
+)
+
+include(GNUInstallDirs)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+
+if(MULTIPASS_ENABLE_FLUTTER_GUI)
+  if(MSVC)
+    set(FLUTTER_TOOLS_EXTENSION ".bat")
+  endif()
+  set(FLUTTER_EXECUTABLE ${CMAKE_SOURCE_DIR}/3rd-party/flutter/bin/flutter${FLUTTER_TOOLS_EXTENSION})
+  set(DART_EXECUTABLE ${CMAKE_SOURCE_DIR}/3rd-party/flutter/bin/dart${FLUTTER_TOOLS_EXTENSION})
+  if(MSVC)
+    set(FLUTTER_CONFIG_ARGS --no-enable-linux-desktop --no-enable-macos-desktop --enable-windows-desktop)
+  elseif(APPLE)
+    set(FLUTTER_CONFIG_ARGS --no-enable-linux-desktop --enable-macos-desktop --no-enable-windows-desktop)
+  elseif(UNIX AND NOT APPLE)
+    set(FLUTTER_CONFIG_ARGS --enable-linux-desktop --no-enable-macos-desktop --no-enable-windows-desktop)
+  endif()
+  execute_process(COMMAND ${FLUTTER_EXECUTABLE} config ${FLUTTER_CONFIG_ARGS} --suppress-analytics --no-enable-web --no-enable-android --no-enable-ios --no-enable-fuchsia --no-enable-custom-devices
+                  COMMAND_ERROR_IS_FATAL ANY)
+  execute_process(COMMAND ${FLUTTER_EXECUTABLE} precache ${FLUTTER_PRECACHE_OS}
+                  COMMAND_ERROR_IS_FATAL ANY)
+  execute_process(COMMAND ${DART_EXECUTABLE} pub get
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/3rd-party/protobuf.dart/protoc_plugin
+                  COMMAND_ERROR_IS_FATAL ANY)
+  execute_process(COMMAND ${DART_EXECUTABLE} compile exe bin/protoc_plugin.dart
+                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/3rd-party/protobuf.dart/protoc_plugin
+                  COMMAND_ERROR_IS_FATAL ANY)
+  set(DART_PROTOC_PLUGIN ${CMAKE_SOURCE_DIR}/3rd-party/protobuf.dart/protoc_plugin/bin/protoc_plugin.exe)
+endif(MULTIPASS_ENABLE_FLUTTER_GUI)
+
+string(TOLOWER "${CMAKE_BUILD_TYPE}" cmake_build_type_lower)
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  add_definitions(-DMULTIPASS_COMPILER_CLANG)
+
+  if(cmake_build_type_lower MATCHES "asan")
+    add_compile_options(-fno-omit-frame-pointer -fsanitize=address)
+    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
+  elseif(cmake_build_type_lower MATCHES "ubsan")
+    add_compile_options(-fno-omit-frame-pointer -fsanitize=undefined)
+    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=undefined")
+  elseif(cmake_build_type_lower MATCHES "tsan")
+    add_compile_options(-fno-omit-frame-pointer -fsanitize=thread)
+    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=thread")
+  endif()
+endif()
+
+# these we want to apply even to 3rd-party
+if(cmake_build_type_lower MATCHES "coverage")
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(--coverage)
+    if(COMMAND add_link_options)
+      add_link_options(--coverage)
+    else()
+      string(APPEND CMAKE_SHARED_LINKER_FLAGS " --coverage")
+      string(APPEND CMAKE_EXE_LINKER_FLAGS " --coverage")
+    endif()
+  else()
+    message(FATAL_ERROR "Coverage build only supported with GCC")
+  endif()
+endif()
+
+if(UNIX)
+  set(HOST_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
+
+  if (${HOST_ARCH} STREQUAL "arm64")
+    set(HOST_ARCH "aarch64")
+  endif ()
+
+  if (${HOST_ARCH} STREQUAL "ppc64le")
+    set(HOST_ARCH "ppc64")
+  endif ()
+
+  if (FORCE_ENABLE_VIRTUALBOX OR (APPLE AND ${HOST_ARCH} MATCHES "x86_64"))
+      list(APPEND MULTIPASS_BACKENDS virtualbox)
+  endif()
+
+  list(APPEND MULTIPASS_BACKENDS qemu)
+
+  if(APPLEVZ_ENABLED)
+    list(APPEND MULTIPASS_BACKENDS applevz)
+  endif()
+endif()
+
+# Boost config
+find_package(Boost CONFIG REQUIRED COMPONENTS json)
+
+# OpenSSL config
+find_package(OpenSSL CONFIG REQUIRED)
+
+# gRPC config
+find_package(gRPC CONFIG REQUIRED)
+
+
+# SG_REQUIRE_NOEXCEPT_IN_CPP17
+# fmt config
+find_package(fmt CONFIG REQUIRED)
+# targets: fmt::fmt, fmt::fmt-header-only
+
+# scope_guard config
+find_path(SCOPE_GUARD_INCLUDE_DIRS "scope_guard.hpp")
+add_library(scope_guard INTERFACE)
+target_include_directories(scope_guard INTERFACE ${SCOPE_GUARD_INCLUDE_DIRS})
+target_compile_definitions(scope_guard INTERFACE SG_REQUIRE_NOEXCEPT_IN_CPP17)
+
+# yaml-cpp config
+find_package(yaml-cpp CONFIG REQUIRED)
+
+# neargye-semver config
+find_package(semver CONFIG REQUIRED)
+
+# Needs to be here before we set further compilation options
+add_subdirectory(3rd-party)
+
+# Qt config
+find_package(Qt6 COMPONENTS Core Concurrent Network REQUIRED)
+
+# xz-embedded config
+find_package(xz-embedded CONFIG)
+
+include(src/cmake/versioning.cmake)
+determine_version(MULTIPASS_VERSION)
+set(MULTIPASS_VERSION ${MULTIPASS_VERSION})
+message(STATUS "Setting version to: ${MULTIPASS_VERSION}")
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+if(MSVC)
+  add_definitions(-DMULTIPASS_COMPILER_MSVC)
+  add_definitions(-D_WIN32_WINNT=0xA00) # A gprc header requires this (specifies Windows 10)
+  add_definitions(-DNOMINMAX) # otherwise windows defines macros which interfere with std::min, std::max
+  add_definitions(-DMULTIPASS_PLATFORM_WINDOWS)
+  add_definitions(-DLIBSSH_STATIC) # otherwise adds declspec specifiers to libssh apis
+  add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS)
+  add_definitions(-DWIN32_LEAN_AND_MEAN)
+  set(MULTIPASS_BACKENDS hyperv virtualbox)
+  set(MULTIPASS_PLATFORM windows)
+else()
+  add_compile_options(-Werror -Wall -pedantic -fPIC)
+
+  if(APPLE)
+    add_definitions(-DMULTIPASS_PLATFORM_APPLE)
+    set(MULTIPASS_PLATFORM macos)
+    add_definitions(-DMULTIPASS_COMPILER_APPLE_CLANG)
+  else()
+    # Linux
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      add_definitions(-DMULTIPASS_COMPILER_GCC)
+    endif()
+
+    add_compile_options(-Wextra -Wempty-body -Wformat-security -Winit-self -Warray-bounds $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>)
+
+    if(NOT ${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "^arm")
+      add_compile_options(-Wcast-align)
+    endif()
+
+    CHECK_CXX_COMPILER_FLAG("-Wno-expansion-to-defined" COMPILER_SUPPORTS_NO_EXP_TO_DEFINED)
+    if(COMPILER_SUPPORTS_NO_EXP_TO_DEFINED)
+      add_compile_options(-Wno-expansion-to-defined)
+    endif()
+
+    add_definitions(-DMULTIPASS_PLATFORM_LINUX)
+    set(MULTIPASS_PLATFORM linux)
+    set(LINUX TRUE)
+  endif()
+endif()
+
+if(cmake_build_type_lower MATCHES "coverage")
+  find_program(GCOV gcov)
+  find_program(LCOV lcov)
+  find_program(GENHTML genhtml)
+
+  if(NOT (GCOV AND LCOV AND GENHTML))
+    message(AUTHOR_WARNING
+      "gcov, lcov and genhtml required for coverage reports. Disabling."
+    )
+  else()
+    message(STATUS
+      "Coverage enabled, use the 'covreport' target."
+    )
+    execute_process(COMMAND ${LCOV} --version
+                    OUTPUT_VARIABLE LCOV_VERSION_RAW)
+    string(REGEX REPLACE "lcov: LCOV version " "" LCOV_VERSION_STR "${LCOV_VERSION_RAW}")
+    string(REGEX REPLACE "\\..*" "" LCOV_VERSION_MAJOR "${LCOV_VERSION_STR}")
+    if(${LCOV_VERSION_MAJOR} GREATER_EQUAL 2)
+      set(LCOV_IGNORE_ERRORS --ignore-errors mismatch --ignore-errors negative)
+    endif()
+
+    add_custom_target(covreport
+      DEPENDS cinaclaw_tests
+      WORKING_DIRECTORY ${CMAKE_BUILD_DIR}
+      COMMAND ${LCOV} --directory . --zerocounters
+      COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target test
+      COMMAND ${LCOV} --directory . --capture --output-file coverage.info ${LCOV_IGNORE_ERRORS}
+      COMMAND ${LCOV}
+        --remove coverage.info
+        '/usr/*'
+        ${CMAKE_SOURCE_DIR}'/3rd-party/*'
+        ${CMAKE_SOURCE_DIR}'/tests/*'
+        ${CMAKE_BINARY_DIR}'/*'
+        --output-file coverage.cleaned
+      COMMAND ${CMAKE_COMMAND} -E remove coverage.info
+      COMMAND ${GENHTML} -o coverage coverage.cleaned
+    )
+  endif()
+endif()
+
+set(MULTIPASS_GENERATED_SOURCE_DIR ${CMAKE_BINARY_DIR}/gen)
+file(MAKE_DIRECTORY ${MULTIPASS_GENERATED_SOURCE_DIR})
+
+include_directories(
+  include
+  ${MULTIPASS_GENERATED_SOURCE_DIR})
+
+add_subdirectory(data)
+add_subdirectory(src)
+
+if(MULTIPASS_ENABLE_TESTS)
+  enable_testing()
+  add_subdirectory(tests/unit)
+endif()
+
+include(packaging/cpack.cmake OPTIONAL)
+
+# Disable .clang-tidy in build folder
+file(WRITE "${CMAKE_BINARY_DIR}/.clang-tidy"
+"---
+Checks: >
+  -*,
+")

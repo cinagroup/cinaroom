@@ -1,0 +1,89 @@
+/*
+ * Copyright (C) Canonical, Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 3.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+#pragma once
+
+#include "temp_file.h"
+
+#include "mock_image_host.h"
+#include <cinaclaw/vm_image.h>
+#include <cinaclaw/vm_image_vault.h>
+
+namespace cinaclaw
+{
+namespace test
+{
+struct StubVMImageVault final : public cinaclaw::VMImageVault
+{
+    cinaclaw::VMImage fetch_image(const cinaclaw::FetchType&,
+                                   const cinaclaw::Query&,
+                                   const PrepareAction& prepare,
+                                   const cinaclaw::ProgressMonitor&,
+                                   const std::optional<std::string>&,
+                                   const cinaclaw::Path&) override
+    {
+        return prepare({dummy_image.path(), {}, {}, {}, {}, {}, {}});
+    };
+
+    void remove(const std::string&) override {};
+    bool has_record_for(const std::string&) override
+    {
+        return false;
+    }
+
+    void prune_expired_images() override{};
+    void update_images(const FetchType& fetch_type,
+                       const PrepareAction& prepare,
+                       const ProgressMonitor& monitor) override{};
+
+    MemorySize minimum_image_size_for(const std::string& image) override
+    {
+        return MemorySize{};
+    }
+
+    VMImageHost* image_host_for(const std::string& remote_name) const override
+    {
+        return nullptr;
+    }
+
+    std::vector<std::pair<std::string, VMImageInfo>> all_info_for(const Query& query) const override
+    {
+        return std::vector<std::pair<std::string, cinaclaw::VMImageInfo>>{
+            std::pair<std::string, cinaclaw::VMImageInfo>{"default",
+                                                           {{default_alias},
+                                                            "Ubuntu",
+                                                            "bionic",
+                                                            default_release_info,
+                                                            "Bionic Beaver",
+                                                            true,
+                                                            dummy_image.url(),
+                                                            default_id,
+                                                            default_stream_location,
+                                                            default_version,
+                                                            1,
+                                                            true}}};
+    }
+
+    void clone(const std::string& source_instance_name,
+               const std::string& destination_instance_name) override
+    {
+    }
+
+    TempFile dummy_image;
+};
+} // namespace test
+} // namespace cinaclaw

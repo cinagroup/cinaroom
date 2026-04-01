@@ -1,14 +1,14 @@
-# CinaRoom 架构设计
+# CinaSeek 架构设计
 
 ## 整体架构
 
 ```
-[用户浏览器] → [Cloudflare Tunnel] → [云端Go中转服务] → [用户端Go客户端] → [Cinaseek引擎] → [Multipass虚拟机]
+[用户浏览器] → [Cloudflare Tunnel] → [云端Go中转服务] → [用户端Go客户端] → [CinaClaw引擎] → [Multipass虚拟机]
 ```
 
 ## 模块说明
 
-### Cinaseek（cinaseek/）
+### Cinaseek（cinaclaw/）
 - **职责**：虚拟机生命周期管理（创建/启动/停止/快照/挂载）
 - **技术**：C++17，CMake，gRPC，Protobuf
 - **接口**：gRPC Unix Socket（本地通信）
@@ -17,7 +17,7 @@
   - 客户端/守护进程名：`cinaseek` / `cinaseekd`
   - 环境变量前缀：`CINASEEK_*`
   - Protobuf 命名空间：`cinaseek`
-  - 深度集成 CinaRoom 管理平台 + OpenClaw 专属优化
+  - 深度集成 CinaSeek 管理平台 + OpenClaw 专属优化
 
 ### Go 云端中转服务（backend/）
 - **职责**：用户鉴权、WebSocket 连接管理、请求转发
@@ -38,7 +38,7 @@
 ## 数据流
 
 ```
-1. 用户访问 https://user.cinaroom.run
+1. 用户访问 https://user.cinaseek.run
 2. Cloudflare Tunnel 转发至云端 Go 服务
 3. Go 服务通过 WebSocket 查找用户端连接
 4. 请求转发至用户端 Go 客户端
@@ -64,7 +64,7 @@
 CinaGroup 技术生态
 ├── CinaSeek           # LLM 聚合平台（核心产品）
 │   └── CinaToken      # OAuth 认证（基础设施层）
-└── CinaRoom           # 虚拟机远程管理平台
+└── CinaSeek           # 虚拟机远程管理平台
     └── Cinaseek       # VM 引擎（基于 Multipass fork，GPLv3）
 ```
 

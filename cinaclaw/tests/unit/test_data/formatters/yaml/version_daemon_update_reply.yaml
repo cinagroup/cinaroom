@@ -1,0 +1,6 @@
+cinaclaw: Client version
+cinaclawd: Daemon version
+update:
+  title: update title information
+  description: update description information
+  url: "http://cinaclaw.web"

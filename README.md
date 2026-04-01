@@ -1,4 +1,4 @@
-# CinaRoom
+# CinaSeek
 
 > 自主品牌轻量级 Ubuntu 虚拟机远程管理工具  
 > 零配置远程访问 · OpenClaw 一键部署 · 安全无密钥泄露
@@ -20,11 +20,11 @@
 
 ## 🏗️ 架构
 
-**CinaRoom = Cinaseek（VM引擎）+ Go中转服务 + Vue3面板 + WebSocket终端**
+**CinaSeek = CinaClaw（VM引擎）+ Go中转服务 + Vue3面板 + WebSocket终端**
 
 ```
-CinaRoom 架构
-├── cinaseek/          # Cinaseek 虚拟机引擎（基于 Multipass fork）
+CinaSeek 架构
+├── cinaclaw/          # CinaClaw 虚拟机引擎（基于 Multipass fork）
 │   ├── src/           # C++ 源码
 │   ├── include/       # 头文件
 │   └── snap/          # Snap 打包
@@ -35,11 +35,11 @@ CinaRoom 架构
 └── docs/              # 文档
 ```
 
-**数据流：** 用户端安装 Cinaseek → Go客户端连接云端 → Cloudflare Tunnel → Web面板
+**数据流：** 用户端安装 CinaClaw VM 引擎
 
 ```
 ┌──────────────┐    ┌──────────────────┐    ┌─────────────────┐    ┌──────────────┐    ┌──────────────┐
-│  用户浏览器   │ →  │ Cloudflare Tunnel │ →  │ 云端Go中转服务   │ →  │ 用户端Go客户端 │ →  │ Cinaseek引擎  │
+│  用户浏览器   │ →  │ Cloudflare Tunnel │ →  │ 云端Go中转服务   │ →  │ 用户端Go客户端 │ →  │ CinaClaw引擎  │
 └──────────────┘    └──────────────────┘    └─────────────────┘    └──────────────┘    └──────────────┘
                                                                                           │
                                                                                           ↓
@@ -48,12 +48,12 @@ CinaRoom 架构
                                                                                    └──────────────┘
 ```
 
-- **Cinaseek** 基于 Canonical Multipass GPLv3，自主品牌运营，深度定制适配 CinaRoom 场景
+- **Cinaseek** 基于 Canonical Multipass GPLv3，自主品牌 CinaClaw运营，深度定制适配 CinaSeek 场景
 
 ## 📦 技术栈
 
 ### 虚拟机引擎
-- Cinaseek（基于 Canonical Multipass fork，GPLv3）
+- CinaClaw（基于 Canonical Multipass fork，GPLv3）
 - C++17，CMake，gRPC，Protobuf
 - 支持多平台：Linux（QEMU/LXD）、macOS（HyperKit）、Windows（Hyper-V）
 
@@ -83,8 +83,8 @@ CinaRoom 架构
 
 ```bash
 # 克隆仓库
-git clone https://github.com/cinagroup/cinaroom.git
-cd cinaroom
+git clone https://github.com/cinagroup/cinaseek.git
+cd cinaseek
 
 # 启动所有服务（后端 + WebSocket + PostgreSQL + Redis）
 docker-compose up -d
@@ -101,8 +101,8 @@ open http://localhost:3000
 ```bash
 cd backend
 go mod tidy
-go build -o bin/cinaroom-backend cmd/server/main.go
-./bin/cinaroom-backend
+go build -o bin/cinaseek-backend cmd/server/main.go
+./bin/cinaseek-backend
 ```
 
 ### 前端单独构建
@@ -123,13 +123,13 @@ cd websocket
 ## 📁 项目结构
 
 ```
-cinaroom/
-├── cinaseek/           # Cinaseek 虚拟机引擎（基于 Multipass fork）
+cinaclaw/
+├── cinaclaw/           # CinaClaw 虚拟机引擎（基于 Multipass fork）
 │   ├── src/            # C++ 源码
 │   ├── include/        # 头文件
 │   ├── snap/           # Snap 打包配置
 │   ├── CMakeLists.txt  # 构建配置
-│   └── README.md       # Cinaseek 说明
+│   └── README.md       # CinaClaw VM 引擎
 ├── frontend/           # Vue3 前端项目
 │   ├── src/
 │   │   ├── components/ # 组件
@@ -175,7 +175,7 @@ cinaroom/
 
 ## 🔐 认证集成（CinaToken OAuth）
 
-CinaRoom 使用 CinaToken 统一认证（SSO），支持 9 个 OAuth Provider：
+CinaSeek 使用 CinaToken 统一认证（SSO），支持 9 个 OAuth Provider：
 
 - GitHub
 - Google
@@ -186,7 +186,7 @@ CinaRoom 使用 CinaToken 统一认证（SSO），支持 9 个 OAuth Provider：
 **登录流程：**
 1. 用户点击"使用 CinaToken 账号登录"
 2. 跳转到 CinaToken OAuth 授权页
-3. 授权后返回 CinaRoom，携带 access_token
+3. 授权后返回 CinaSeek，携带 access_token
 4. 后端验证 Token，创建会话
 
 **详细集成指南：** [docs/CINASEEK_INTEGRATION.md](docs/CINASEEK_INTEGRATION.md)
@@ -277,7 +277,7 @@ npm run test:e2e
 
 ## 🔗 相关链接
 
-- **GitHub**: https://github.com/cinagroup/cinaroom
+- **GitHub**: https://github.com/cinagroup/cinaseek
 - **CinaSeek**: https://github.com/cinagroup/cinaseek
 - **CinaToken**: https://github.com/cinagroup/cinatoken
 - **品牌文档**: [BRAND.md](BRAND.md)
@@ -289,4 +289,4 @@ MIT License
 
 ---
 
-*CinaRoom - 你的云端开发工作室*
+*CinaSeek - 你的云端开发工作室*

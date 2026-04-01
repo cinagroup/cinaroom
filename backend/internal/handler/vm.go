@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"cinaroom-backend/internal/config"
-	"cinaroom-backend/internal/model"
-	"cinaroom-backend/internal/repository"
-	"cinaroom-backend/pkg/response"
+	"github.com/cinagroup/cinaseek/backend/internal/config"
+	"github.com/cinagroup/cinaseek/backend/internal/model"
+	"github.com/cinagroup/cinaseek/backend/internal/repository"
+	"github.com/cinagroup/cinaseek/backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )

@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"cinaroom-backend/pkg/response"
+	"github.com/cinagroup/cinaseek/backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/time/rate"

@@ -5,8 +5,8 @@ import (
 	"log/slog"
 	"time"
 
-	"cinaroom-backend/internal/config"
-	"cinaroom-backend/internal/model"
+	"github.com/cinagroup/cinaseek/backend/internal/config"
+	"github.com/cinagroup/cinaseek/backend/internal/model"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

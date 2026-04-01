@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# CinaRoom Backend 部署脚本
+# CinaSeek Backend 部署脚本
 # 使用方式：./scripts/deploy.sh [dev|prod]
 
 set -e
@@ -12,10 +12,10 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # 配置
-APP_NAME="cinaroom-backend"
-APP_DIR="/opt/cinaroom-backend"
+APP_NAME="cinaseek-backend"
+APP_DIR="/opt/cinaseek-backend"
 SYSTEMD_SERVICE="/etc/systemd/system/${APP_NAME}.service"
-BACKUP_DIR="/opt/backups/cinaroom-backend"
+BACKUP_DIR="/opt/backups/cinaseek-backend"
 
 # 检查是否以 root 运行
 if [ "$EUID" -ne 0 ]; then
@@ -102,7 +102,7 @@ stop_service() {
 build_app() {
   log_info "编译应用..."
   
-  cd /root/.openclaw/workspace/cinaroom/backend
+  cd /root/.openclaw/workspace/cinaseek/backend
   
   if [ "$ENV" = "prod" ]; then
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-s -w" -o "$APP_DIR/${APP_NAME}" cmd/server/main.go
@@ -121,7 +121,7 @@ create_systemd_service() {
   
   cat > "$SYSTEMD_SERVICE" <<EOF
 [Unit]
-Description=CinaRoom Backend API
+Description=CinaSeek Backend API
 After=network.target postgresql.service
 
 [Service]
@@ -135,7 +135,7 @@ Environment="SERVER_PORT=8080"
 Environment="DB_HOST=localhost"
 Environment="DB_USER=postgres"
 Environment="DB_PASSWORD=postgres"
-Environment="DB_NAME=cinaroom"
+Environment="DB_NAME=cinaseek"
 Environment="DB_SSLMODE=disable"
 Environment="JWT_SECRET=your-secret-key-change-in-production"
 
@@ -213,7 +213,7 @@ health_check() {
 docker_deploy() {
   log_info "使用 Docker 部署..."
   
-  cd /root/.openclaw/workspace/cinaroom/backend
+  cd /root/.openclaw/workspace/cinaseek/backend
   
   # 构建镜像
   docker build -t "${APP_NAME}:latest" .
@@ -229,7 +229,7 @@ docker_deploy() {
     -e DB_HOST=postgres \
     -e DB_USER=postgres \
     -e DB_PASSWORD=postgres \
-    -e DB_NAME=cinaroom \
+    -e DB_NAME=cinaseek \
     --restart unless-stopped \
     "${APP_NAME}:latest"
   
@@ -238,7 +238,7 @@ docker_deploy() {
 
 # 主流程
 main() {
-  log_info "开始部署 CinaRoom Backend"
+  log_info "开始部署 CinaSeek Backend"
   
   check_dependencies
   create_directories

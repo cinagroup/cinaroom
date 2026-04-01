@@ -1,4 +1,4 @@
--- CinaRoom Phase 2 数据库迁移脚本
+-- CinaSeek Phase 2 数据库迁移脚本
 -- 用于集成 CinaToken OAuth 认证
 
 -- ===========================================

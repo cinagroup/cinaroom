@@ -21,12 +21,12 @@ psql -h <DB_HOST> -U <DB_USER> -d <DB_NAME> -c "SELECT 1"
 1. 登录 https://cinatoken.com/admin
 2. 进入 "OAuth 应用管理" → "创建应用"
 3. 填写应用信息：
-   - **应用名称**: CinaRoom
-   - **应用描述**: CinaRoom 远程管理平台
+   - **应用名称**: CinaSeek
+   - **应用描述**: CinaSeek 远程管理平台
    - **回调地址**: http://localhost:3000/oauth/callback
    - **Scopes**: user:read user:email
 4. 保存后获取：
-   - `Client ID`: `cinaroom_xxx`
+   - `Client ID`: `cinaseek_xxx`
    - `Client Secret`: `sk_xxx`
 
 **更新后端配置**:
@@ -36,7 +36,7 @@ cp .env.example .env
 vim .env
 
 # 修改以下配置
-CINATOKEN_CLIENT_ID=cinaroom_xxx
+CINATOKEN_CLIENT_ID=cinaseek_xxx
 CINATOKEN_CLIENT_SECRET=sk_xxx
 CINATOKEN_REDIRECT_URI=http://localhost:3000/oauth/callback
 ```
@@ -214,7 +214,7 @@ go test -v ./tests/oauth_test.go -run TestCinaTokenClient
 === RUN   TestCinaTokenClient_GetAuthorizationURL
 --- PASS: TestCinaTokenClient_GetAuthorizationURL (0.00s)
 PASS
-ok      cinaroom-backend/tests    0.003s
+ok      cinaseek-backend/tests    0.003s
 ```
 
 ### 运行所有 OAuth 测试

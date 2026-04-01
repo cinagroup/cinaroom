@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="WixToolset.Sdk/5.0.2">
+    <PropertyGroup>
+        <BuildVersion>0.0</BuildVersion>
+        <DefineConstants>Version=$(BuildVersion)</DefineConstants>
+        <InstallerPlatform>x64</InstallerPlatform>
+        <SuppressIces>ICE69;ICE61;ICE03</SuppressIces>
+        <OutputPath>bin\$(Configuration)\</OutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <BindPath Include="..\fonts" />
+        <BindPath Include=".." />
+        <BindPath Include="$(PublishDir)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="WixToolset.Util.wixext" Version="5.*" />
+        <PackageReference Include="WixToolset.UI.wixext" Version="5.*" />
+        <PackageReference Include="WixToolset.Heat" Version="5.*" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <BindVariable Include="WixUILicenseRtf=LICENCE.rtf" />
+        <BindVariable Include="WixUIBannerBmp=cinaclaw.bmp" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <HarvestDirectory Include="$(PublishDir)">
+            <ComponentGroupName>MultipassSupportComponents</ComponentGroupName>
+            <DirectoryRefId>INSTALLFOLDER</DirectoryRefId>
+            <SuppressRootDirectory>true</SuppressRootDirectory>
+            <SuppressRegistry>true</SuppressRegistry>
+            <Transforms>filter.xsl</Transforms>
+        </HarvestDirectory>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\custom-actions\custom-actions.vcxproj">
+            <Project>{D4E3F6C1-1A2B-4C5D-8E9F-0A1B2C3D4E5F}</Project>
+            <SetPlatform>Platform=x64</SetPlatform>
+        </ProjectReference>
+    </ItemGroup>
+</Project>

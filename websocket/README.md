@@ -1,4 +1,4 @@
-# CinaRoom WebSocket 与云端中转架构
+# CinaSeek WebSocket 与云端中转架构
 
 实时 WebSocket 终端和云端安全中转服务，支持 WebShell 终端连接、用户端注册、请求转发等功能。
 
@@ -139,7 +139,7 @@
 ### 2. 克隆项目
 
 ```bash
-cd /root/.openclaw/workspace/cinaroom/websocket
+cd /root/.openclaw/workspace/cinaseek/websocket
 ```
 
 ### 3. 配置环境变量
@@ -305,7 +305,7 @@ docker-compose up -d
 
 1. 创建 Tunnel:
 ```bash
-cloudflared tunnel create cinaroom
+cloudflared tunnel create cinaseek
 ```
 
 2. 配置 DNS CNAME:
@@ -321,7 +321,7 @@ relay.example.com -> tunnel-id.cfargotunnel.com
 ### 项目结构
 
 ```
-cinaroom/websocket/
+cinaseek/websocket/
 ├── backend/
 │   ├── main.go              # 入口文件
 │   ├── terminal.go          # 终端服务实现
@@ -364,10 +364,10 @@ go test -bench=. -benchmem
 cd deploy
 
 # 构建终端服务镜像
-docker build -f Dockerfile.terminal -t cinaroom/terminal .
+docker build -f Dockerfile.terminal -t cinaseek/terminal .
 
 # 构建中转服务镜像
-docker build -f Dockerfile.relay -t cinaroom/relay .
+docker build -f Dockerfile.relay -t cinaseek/relay .
 ```
 
 ## 📊 性能指标

@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <h2>注册账号</h2>
-          <p>创建您的 CinaRoom 账户</p>
+          <p>创建您的 CinaSeek 账户</p>
         </div>
       </template>
       

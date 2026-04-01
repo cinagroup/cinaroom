@@ -1,0 +1,94 @@
+/*
+ * Copyright (C) Canonical, Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 3.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+#pragma once
+
+#include <fmt/format.h>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
+
+#include <QByteArray>
+#include <QProcess>
+#include <QString>
+
+#include <cinaclaw/rpc/cinaclaw.grpc.pb.h>
+
+namespace fmt
+{
+template <>
+struct formatter<QByteArray> : formatter<string_view>
+{
+    template <typename FormatContext>
+    auto format(const QByteArray& a, FormatContext& ctx) const
+    {
+        return formatter<string_view>::format(a.toStdString(), ctx); // TODO: remove the copy?
+    }
+};
+
+template <>
+struct formatter<QString> : formatter<string_view>
+{
+    template <typename FormatContext>
+    auto format(const QString& a, FormatContext& ctx) const
+    {
+        return formatter<string_view>::format(a.toStdString(), ctx); // TODO: remove the copy?
+    }
+};
+
+template <>
+struct formatter<QProcess::ExitStatus> : formatter<int>
+{
+    template <typename FormatContext>
+    auto format(const QProcess::ExitStatus& exit_status, FormatContext& ctx) const
+    {
+        return formatter<int>::format(static_cast<int>(exit_status), ctx);
+    }
+};
+
+template <>
+struct formatter<cinaclaw::MountInfo_MountPaths> : formatter<string_view>
+{
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx)
+    {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const cinaclaw::MountInfo_MountPaths& mount_path, FormatContext& ctx) const
+    {
+        return format_to(ctx.out(), "{} => {}", mount_path.source_path(), mount_path.target_path());
+    }
+};
+
+template <>
+struct formatter<cinaclaw::MountInfo> : formatter<string_view>
+{
+    template <typename ParseContext>
+    constexpr auto parse(ParseContext& ctx)
+    {
+        return ctx.begin();
+    }
+
+    template <typename FormatContext>
+    auto format(const cinaclaw::MountInfo& mount_info, FormatContext& ctx) const
+    {
+        return fmt::format_to(ctx.out(), "{}", fmt::join(mount_info.mount_paths(), ";"));
+    }
+};
+
+} // namespace fmt

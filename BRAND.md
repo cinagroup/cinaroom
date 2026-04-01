@@ -1,8 +1,8 @@
-# CinaRoom - 自主品牌远程管理平台
+# CinaSeek - 自主品牌远程管理平台
 
 ## 品牌定位
 
-**CinaRoom** 是自主品牌轻量级 Ubuntu 虚拟机远程管理工具，主打：
+**CinaSeek** 是自主品牌轻量级 Ubuntu 虚拟机远程管理工具，主打：
 - 🚀 **零配置远程访问** - Cloudflare Tunnel 加密通道
 - 🔧 **OpenClaw 一键部署** - 专属 AI 开发环境
 - 🔒 **安全无密钥泄露** - 用户端无 Cloudflare 密钥，云端集中管控
@@ -12,17 +12,17 @@
 
 ```
 CinaGroup 技术生态
-├── CinaSeek          # LLM 聚合平台（核心产品）
-│   └── CinaToken     # OAuth 认证（基础设施层）
-└── CinaRoom          # 虚拟机远程管理平台
-    └── Cinaseek      # VM 引擎（基于 Multipass fork）
+├── CinaToken         # LLM 聚合平台（核心产品）
+│   └── CinaToken    # OAuth 认证（基础设施层）
+└── CinaSeek          # 虚拟机远程管理平台
+    └── CinaClaw VM 引擎
 ```
 
 ## 核心引擎：Cinaseek
 
-**Cinaseek** 是 CinaRoom 的虚拟机管理引擎，基于 Canonical Multipass (GPLv3) fork 而来：
+**Cinaseek** 是 CinaSeek 的虚拟机管理引擎，基于 Canonical Multipass (GPLv3) fork 而来：
 - 🏭 **自主品牌运营** - 独立品牌标识，非 Multipass 附属
-- 🔧 **深度定制** - 针对 CinaRoom 远程管理场景优化
+- 🔧 **深度定制** - 针对 CinaSeek 远程管理场景优化
 - 🔌 **gRPC 接口** - 通过 Unix Socket 提供 VM 生命周期管理
 - 📦 **Snap 分发** - 支持 Linux/macOS/Windows 多平台
 
@@ -42,11 +42,11 @@ CinaGroup 技术生态
 
 | 项目 | 配置 |
 |------|------|
-| **域名** | cinaroom.run（待注册） |
-| **API 域名** | api.cinaroom.run（待注册） |
-| **GitHub 仓库** | cinagroup/cinaroom |
-| **Docker 镜像** | cinagroup/cinaroom:* |
-| **数据库 Schema** | cinaroom（独立 schema） |
+| **域名** | cinaseek.run（待注册） |
+| **API 域名** | api.cinaseek.run（待注册） |
+| **GitHub 仓库** | cinagroup/cinaseek |
+| **Docker 镜像** | cinagroup/cinaseek:* |
+| **数据库 Schema** | cinaseek（独立 schema） |
 
 ## 核心功能
 
@@ -76,7 +76,7 @@ CinaGroup 技术生态
 
 ## 品牌资产
 
-- **名称**: CinaRoom
+- **名称**: CinaSeek
 - **口号**: "你的云端开发工作室"
 - **定位**: 独立品牌，非 CinaSeek 子模块
 - **受众**: 个人开发者、小型团队、AI 研究者

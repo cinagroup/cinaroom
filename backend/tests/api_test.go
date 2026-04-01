@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"cinaroom-backend/internal/config"
-	"cinaroom-backend/internal/handler"
-	"cinaroom-backend/internal/middleware"
-	"cinaroom-backend/internal/repository"
+	"github.com/cinagroup/cinaseek/backend/internal/config"
+	"github.com/cinagroup/cinaseek/backend/internal/handler"
+	"github.com/cinagroup/cinaseek/backend/internal/middleware"
+	"github.com/cinagroup/cinaseek/backend/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )

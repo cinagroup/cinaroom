@@ -1,37 +1,37 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cinaroom-websocket
-  namespace: cinaroom
+  name: cinaseek-websocket
+  namespace: cinaseek
   labels:
-    app: cinaroom
+    app: cinaseek
     component: websocket
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: cinaroom
+      app: cinaseek
       component: websocket
   template:
     metadata:
       labels:
-        app: cinaroom
+        app: cinaseek
         component: websocket
     spec:
       containers:
       - name: websocket
-        image: cinagroup/cinaroom-ws:latest
+        image: cinagroup/cinaseek-ws:latest
         imagePullPolicy: Always
-        command: ["/cinaroom-ws"]
+        command: ["/cinaseek-ws"]
         workingDir: "/app"
         ports:
         - containerPort: 8081
           name: ws
         envFrom:
         - configMapRef:
-            name: cinaroom-config
+            name: cinaseek-config
         - secretRef:
-            name: cinaroom-secret
+            name: cinaseek-secret
         resources:
           requests:
             cpu: "100m"

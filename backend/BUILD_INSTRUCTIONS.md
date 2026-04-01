@@ -61,7 +61,7 @@ gvm use go1.23 --default
 
 ```bash
 # 使用官方 Go 镜像
-docker run --rm -v $(pwd):/app -w /app golang:1.23 go build -o bin/cinaroom-backend cmd/server/main.go
+docker run --rm -v $(pwd):/app -w /app golang:1.23 go build -o bin/cinaseek-backend cmd/server/main.go
 ```
 
 ## 构建步骤
@@ -69,7 +69,7 @@ docker run --rm -v $(pwd):/app -w /app golang:1.23 go build -o bin/cinaroom-back
 ### 1. 下载依赖
 
 ```bash
-cd /root/.openclaw/workspace/cinaroom/backend
+cd /root/.openclaw/workspace/cinaseek/backend
 go mod download
 ```
 
@@ -77,20 +77,20 @@ go mod download
 
 ```bash
 # 开发版本
-go build -o bin/cinaroom-backend cmd/server/main.go
+go build -o bin/cinaseek-backend cmd/server/main.go
 
 # 生产版本（优化体积）
-CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-s -w" -o bin/cinaroom-backend cmd/server/main.go
+CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-s -w" -o bin/cinaseek-backend cmd/server/main.go
 ```
 
 ### 3. 验证
 
 ```bash
 # 检查二进制文件
-ls -lh bin/cinaroom-backend
+ls -lh bin/cinaseek-backend
 
 # 运行帮助（如果实现了）
-./bin/cinaroom-backend --help
+./bin/cinaseek-backend --help
 ```
 
 ## 使用 Make
@@ -123,7 +123,7 @@ make docker-run
 ### 方式 1: 直接构建
 
 ```bash
-docker build -t cinaroom-backend:latest .
+docker build -t cinaseek-backend:latest .
 ```
 
 ### 方式 2: 使用 Docker Compose
@@ -170,7 +170,7 @@ go mod download
 **解决**:
 ```bash
 # 限制编译使用的内存
-GOMEMLIMIT=512MiB go build -o bin/cinaroom-backend cmd/server/main.go
+GOMEMLIMIT=512MiB go build -o bin/cinaseek-backend cmd/server/main.go
 
 # 或添加 swap 空间
 sudo fallocate -l 2G /swapfile
@@ -189,7 +189,7 @@ sudo swapon /swapfile
 apt-get install build-essential
 
 # 或使用 CGO_ENABLED=0
-CGO_ENABLED=0 go build -o bin/cinaroom-backend cmd/server/main.go
+CGO_ENABLED=0 go build -o bin/cinaseek-backend cmd/server/main.go
 ```
 
 ## 交叉编译
@@ -197,19 +197,19 @@ CGO_ENABLED=0 go build -o bin/cinaroom-backend cmd/server/main.go
 ### 编译 Linux AMD64
 
 ```bash
-GOOS=linux GOARCH=amd64 go build -o bin/cinaroom-backend-linux-amd64 cmd/server/main.go
+GOOS=linux GOARCH=amd64 go build -o bin/cinaseek-backend-linux-amd64 cmd/server/main.go
 ```
 
 ### 编译 macOS AMD64
 
 ```bash
-GOOS=darwin GOARCH=amd64 go build -o bin/cinaroom-backend-darwin-amd64 cmd/server/main.go
+GOOS=darwin GOARCH=amd64 go build -o bin/cinaseek-backend-darwin-amd64 cmd/server/main.go
 ```
 
 ### 编译 Windows AMD64
 
 ```bash
-GOOS=windows GOARCH=amd64 go build -o bin/cinaroom-backend-windows-amd64.exe cmd/server/main.go
+GOOS=windows GOARCH=amd64 go build -o bin/cinaseek-backend-windows-amd64.exe cmd/server/main.go
 ```
 
 ## 性能优化
@@ -221,7 +221,7 @@ GOOS=windows GOARCH=amd64 go build -o bin/cinaroom-backend-windows-amd64.exe cmd
 apt-get install upx
 
 # 压缩二进制文件
-upx --best bin/cinaroom-backend
+upx --best bin/cinaseek-backend
 
 # 可减小 50-70% 体积
 ```
@@ -229,13 +229,13 @@ upx --best bin/cinaroom-backend
 ### 2. 去除调试信息
 
 ```bash
-go build -ldflags="-s -w" -o bin/cinaroom-backend cmd/server/main.go
+go build -ldflags="-s -w" -o bin/cinaseek-backend cmd/server/main.go
 ```
 
 ### 3. 静态编译
 
 ```bash
-CGO_ENABLED=0 go build -a -ldflags="-s -w" -o bin/cinaroom-backend cmd/server/main.go
+CGO_ENABLED=0 go build -a -ldflags="-s -w" -o bin/cinaseek-backend cmd/server/main.go
 ```
 
 ## 验证构建
@@ -244,10 +244,10 @@ CGO_ENABLED=0 go build -a -ldflags="-s -w" -o bin/cinaroom-backend cmd/server/ma
 
 ```bash
 # 查看文件大小
-ls -lh bin/cinaroom-backend
+ls -lh bin/cinaseek-backend
 
 # 查看文件类型
-file bin/cinaroom-backend
+file bin/cinaseek-backend
 
 # 应该显示：ELF 64-bit LSB executable, x86-64
 ```
@@ -267,7 +267,7 @@ go tool cover -html=coverage.out
 
 ```bash
 # 启动服务
-./bin/cinaroom-backend &
+./bin/cinaseek-backend &
 
 # 等待几秒后检查
 curl http://localhost:8080/health
@@ -279,7 +279,7 @@ curl http://localhost:8080/health
 
 - [ ] Go 版本 >= 1.23
 - [ ] 依赖已下载（go.sum 存在）
-- [ ] 编译成功（bin/cinaroom-backend 存在）
+- [ ] 编译成功（bin/cinaseek-backend 存在）
 - [ ] 二进制文件可执行
 - [ ] 单元测试通过
 - [ ] 健康检查通过

@@ -1,4 +1,4 @@
-# CinaRoom 落地执行计划
+# CinaSeek 落地执行计划
 
 > 基于《Multipass自主品牌Web远程管理平台 完整落地执行计划》整理
 

@@ -25,7 +25,7 @@ services:
       - ./logs/terminal:/app/logs
       - /etc/localtime:/etc/localtime:ro
     networks:
-      - cinaroom-network
+      - cinaseek-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -62,7 +62,7 @@ services:
       - ./logs/relay:/app/logs
       - /etc/localtime:/etc/localtime:ro
     networks:
-      - cinaroom-network
+      - cinaseek-network
     depends_on:
       - websocket-terminal
     healthcheck:
@@ -94,7 +94,7 @@ services:
       - ./cloudflared-creds.json:/etc/cloudflared/creds.json:ro
       - ./logs/cloudflared:/var/log/cloudflared
     networks:
-      - cinaroom-network
+      - cinaseek-network
     depends_on:
       - websocket-terminal
       - cloud-relay
@@ -117,7 +117,7 @@ services:
       - ./ssl:/etc/nginx/ssl:ro
       - ./logs/nginx:/var/log/nginx
     networks:
-      - cinaroom-network
+      - cinaseek-network
     depends_on:
       - websocket-terminal
       - cloud-relay
@@ -138,7 +138,7 @@ services:
       - redis-data:/data
       - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
     networks:
-      - cinaroom-network
+      - cinaseek-network
     command: redis-server /usr/local/etc/redis/redis.conf
     deploy:
       resources:
@@ -147,7 +147,7 @@ services:
           memory: 256M
 
 networks:
-  cinaroom-network:
+  cinaseek-network:
     driver: bridge
     ipam:
       config:

@@ -3,7 +3,7 @@
     <el-card class="login-card">
       <template #header>
         <div class="card-header">
-          <h2>CinaRoom</h2>
+          <h2>CinaSeek</h2>
           <p>你的云端开发工作室</p>
         </div>
       </template>

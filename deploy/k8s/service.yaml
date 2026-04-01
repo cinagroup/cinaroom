@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: cinaroom-backend
-  namespace: cinaroom
+  name: cinaseek-backend
+  namespace: cinaseek
   labels:
-    app: cinaroom
+    app: cinaseek
     component: backend
 spec:
   type: ClusterIP
@@ -14,16 +14,16 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: cinaroom
+    app: cinaseek
     component: backend
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: cinaroom-websocket
-  namespace: cinaroom
+  name: cinaseek-websocket
+  namespace: cinaseek
   labels:
-    app: cinaroom
+    app: cinaseek
     component: websocket
 spec:
   type: ClusterIP
@@ -33,5 +33,5 @@ spec:
     protocol: TCP
     name: ws
   selector:
-    app: cinaroom
+    app: cinaseek
     component: websocket

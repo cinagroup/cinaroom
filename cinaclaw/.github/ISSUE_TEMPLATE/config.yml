@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://canonical.com/cinaclaw/docs
+    about: See here about potential solutions to some common problems
+  - name: Forums
+    url: https://discourse.ubuntu.com/c/cinaclaw
+    about: Please ask and answer questions here.
+  - name: "#cinaclaw on Libera.Chat"
+    url: https://web.libera.chat/?channels=#cinaclaw
+    about: Chat to us!

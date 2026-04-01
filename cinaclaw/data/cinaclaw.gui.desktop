@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Multipass
+Exec=cinaclaw.gui
+Icon=cinaclaw.gui
+Type=Application
+Terminal=false
+Categories=Utility;

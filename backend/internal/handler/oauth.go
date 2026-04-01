@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"time"
 
-	"cinaroom-backend/internal/config"
-	"cinaroom-backend/internal/middleware"
-	"cinaroom-backend/internal/model"
-	"cinaroom-backend/internal/oauth"
-	"cinaroom-backend/internal/repository"
-	"cinaroom-backend/pkg/response"
+	"github.com/cinagroup/cinaseek/backend/internal/config"
+	"github.com/cinagroup/cinaseek/backend/internal/middleware"
+	"github.com/cinagroup/cinaseek/backend/internal/model"
+	"github.com/cinagroup/cinaseek/backend/internal/oauth"
+	"github.com/cinagroup/cinaseek/backend/internal/repository"
+	"github.com/cinagroup/cinaseek/backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
@@ -145,7 +145,7 @@ func (h *OAuthHandler) OAuthCallback(c *gin.Context) {
 	}
 	db.Create(&loginLog)
 	
-	// 生成 CinaRoom 的 JWT Token
+	// 生成 CinaSeek 的 JWT Token
 	token, err := middleware.GenerateToken(&h.cfg.JWT, user.ID, user.Username)
 	if err != nil {
 		response.InternalError(c, "Token 生成失败")

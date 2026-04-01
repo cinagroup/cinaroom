@@ -1,4 +1,4 @@
-# CinaRoom Backend API 文档
+# CinaSeek Backend API 文档
 
 ## 基础信息
 
@@ -570,7 +570,7 @@ Authorization: Bearer <your_token>
 ```json
 {
   "key": "system_name",
-  "value": "CinaRoom 管理平台"
+  "value": "CinaSeek 管理平台"
 }
 ```
 

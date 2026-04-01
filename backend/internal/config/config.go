@@ -80,17 +80,17 @@ func Load() *Config {
 		Database: DatabaseConfig{
 			Host:            getEnv("DB_HOST", "localhost"),
 			Port:            getEnv("DB_PORT", "5432"),
-			User:            getEnv("DB_USER", "cinaroom"),
-			Password:        getEnv("DB_PASSWORD", "cinaroom"),
+			User:            getEnv("DB_USER", "cinaseek"),
+			Password:        getEnv("DB_PASSWORD", "cinaseek"),
 			DBName:          getEnv("DB_NAME", "cinatoken"),
-			Schema:          getEnv("DB_SCHEMA", "cinaroom"),
+			Schema:          getEnv("DB_SCHEMA", "cinaseek"),
 			SSLMode:         getEnv("DB_SSLMODE", "disable"),
 			MaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", 10),
 			MaxOpenConns:    getEnvInt("DB_MAX_OPEN_CONNS", 100),
 			ConnMaxLifetime: time.Duration(getEnvInt("DB_CONN_MAX_LIFETIME", 3600)) * time.Second,
 		},
 		JWT: JWTConfig{
-			Secret:     getEnv("JWT_SECRET", "cinaroom-secret-key-change-in-production"),
+			Secret:     getEnv("JWT_SECRET", "cinaseek-secret-key-change-in-production"),
 			ExpireTime: time.Duration(getEnvInt("JWT_EXPIRE_HOURS", 24)) * time.Hour,
 		},
 		CORS: CORSConfig{

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 CinaRoom 数据库迁移脚本 (Phase 2)"
+echo "🚀 CinaSeek 数据库迁移脚本 (Phase 2)"
 echo "======================================"
 echo ""
 
@@ -13,9 +13,9 @@ fi
 # 从环境变量读取数据库配置
 DB_HOST=${DB_HOST:-localhost}
 DB_PORT=${DB_PORT:-5432}
-DB_USER=${DB_USER:-cinaroom}
+DB_USER=${DB_USER:-cinaseek}
 DB_NAME=${DB_NAME:-cinatoken}
-DB_SCHEMA=${DB_SCHEMA:-cinaroom}
+DB_SCHEMA=${DB_SCHEMA:-cinaseek}
 
 echo "📊 数据库连接信息:"
 echo "   主机：$DB_HOST:$DB_PORT"

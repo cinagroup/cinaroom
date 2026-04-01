@@ -1,9 +1,0 @@
-cinaseek   Client version
-cinaseekd  Daemon version
-
-##################################################
-update title information
-update description information
-
-Go here for more information: http://cinaseek.web
-##################################################

@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cinaroom-config
-  namespace: cinaroom
+  name: cinaseek-config
+  namespace: cinaseek
 data:
   # 数据库配置
   DATABASE_HOST: "postgresql-master.cinatoken.svc.cluster.local"
   DATABASE_PORT: "5432"
   DATABASE_NAME: "cinatoken"
-  DATABASE_SCHEMA: "cinaroom"
+  DATABASE_SCHEMA: "cinaseek"
   
   # Redis 配置
   REDIS_HOST: "redis.cinatoken.svc.cluster.local"
@@ -24,7 +24,7 @@ data:
   
   # Cloudflare Tunnel 配置
   CLOUDFLARE_TUNNEL_ID: "pending"
-  CLOUDFLARE_DOMAIN: "cinaroom.run"
+  CLOUDFLARE_DOMAIN: "cinaseek.run"
   
   # 日志配置
   LOG_LEVEL: "info"

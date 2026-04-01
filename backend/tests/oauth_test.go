@@ -7,9 +7,9 @@ import (
 	"os"
 	"testing"
 
-	"cinaroom-backend/internal/config"
-	"cinaroom-backend/internal/handler"
-	"cinaroom-backend/internal/oauth"
+	"github.com/cinagroup/cinaseek/backend/internal/config"
+	"github.com/cinagroup/cinaseek/backend/internal/handler"
+	"github.com/cinagroup/cinaseek/backend/internal/oauth"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

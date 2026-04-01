@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"cinaroom-backend/internal/config"
-	"cinaroom-backend/pkg/response"
+	"github.com/cinagroup/cinaseek/backend/internal/config"
+	"github.com/cinagroup/cinaseek/backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -65,7 +65,7 @@ func GenerateToken(cfg *config.JWTConfig, userID uint, username string) (string,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(cfg.ExpireTime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			Issuer:    "cinaroom-backend",
+			Issuer:    "cinaseek-backend",
 		},
 	}
 

@@ -1,0 +1,247 @@
+(how-to-guides-customise-cinaclaw-set-up-a-graphical-interface)=
+# Set up a graphical interface
+
+```{seealso}
+
+[GUI Client](reference-gui-client),[launch](reference-command-line-interface-launch), [list](reference-command-line-interface-list), [shell](reference-command-line-interface-shell),  [info](reference-command-line-interface-info), [exec](reference-command-line-interface-exec),
+```
+
+<!-- This document combines
+https://discourse.ubuntu.com/t/how-to-use-a-desktop-in-cinaclaw/16229
+https://discourse.ubuntu.com/t/how-to-use-stand-alone-windows-in-cinaclaw/16340
+-->
+
+<!-- updated thanks to @dan-roscigno's contribution to CODA GitHub issue #128
+https://github.com/canonical/open-documentation-academy/issues/128
+-->
+
+You can display the graphical desktop in various ways. In this document, we describe two options: RDP (Remote Display Protocol) and plain X11 forwarding. Other methods include VNC and running a Mir shell through X11 forwarding, as described in [A simple GUI shell for a cinaclaw VM](https://discourse.ubuntu.com/t/20439).
+
+## Using RDP
+
+The images used by cinaclaw do not come with a graphical desktop installed. For this reason, you will have to install a desktop environment (here we use `ubuntu-desktop` but there are as many other options as flavours of Ubuntu exist) along with the RDP server (we will use `xrdp` but there are also other options such as `freerdp`).
+
+```{admonition} Prerequisites for ubuntu-desktop
+:class: important
+
+Installing a desktop environment requires more resources than the default cinaclaw instance settings. To successfully set up and run a graphical interface under `ubuntu-desktop`, it is recommended to have an instance with at least **10GB** of disk space and **2GB** of RAM.
+
+```
+
+If you have not yet created a suitable instance, run the following command to launch one with these requirements:
+
+```bash
+cinaclaw launch -d 10G -m 2G
+```
+
+After instance creation, you need to log into the appropriate running instance.
+Start by listing your instances:
+
+```{code-block} text
+cinaclaw list
+```
+
+Sample output:
+
+```{code-block} text
+Name                    State             IPv4             Image
+headbanging-squid       Running           10.49.93.209     Ubuntu 22.04 LTS
+```
+
+Next, open a shell into the running instance:
+
+```{code-block} text
+cinaclaw shell headbanging-squid
+```
+
+Once inside the instance, run the following commands to install `ubuntu-desktop` and `xrdp`:
+
+```{code-block} text
+sudo apt update
+sudo apt install ubuntu-desktop xrdp
+```
+
+Now we need a user with a password to log in. One possibility is setting a password for the default `ubuntu` user:
+
+```{code-block} text
+sudo passwd ubuntu
+```
+
+You will be asked to enter and re-enter a password.
+
+You are done on the server side!
+
+Quit the Ubuntu shell on the running instance with the `exit` command, and take note of the IP address to connect to. You can find the instance's IP address in the output of `cinaclaw list` from the first step above, or you can use the `cinaclaw info` command as well.
+
+```{code-block} text
+cinaclaw info headbanging-squid
+```
+
+Sample output:
+
+```{code-block} text
+Name:           headbanging-squid
+State:          Running
+Snapshots:      0
+IPv4:           10.49.93.209
+Release:        Ubuntu 22.04 LTS
+Image hash:     2e0c90562af1 (Ubuntu 22.04 LTS)
+CPU(s):         4
+Load:           0.00 0.00 0.00
+Disk usage:     1.8GiB out of 5.7GiB
+Memory usage:   294.2MiB out of 3.8GiB
+Mounts:         --
+```
+
+In this example, we will use the IP address `10.49.93.209` to connect to the RDP server on the instance.
+
+```{note}
+If the IP address of the instance is not displayed in the output of `cinaclaw list`, you can obtain it directly from the instance, with the command `ip addr`.
+```
+
+`````{tab-set}
+
+````{tab-item} Linux
+:sync: Linux
+
+On Linux, there are applications such as Remmina to visualise the desktop (make sure the package `remmina-plugin-rdp` is installed in your host along with `remmina`).
+
+To directly launch the client, run the following command:
+
+```{code-block} text
+remmina -c rdp://10.49.93.209
+```
+
+The system will ask for a username (`ubuntu`) and the password set above, and then the Ubuntu desktop on the instance will be displayed.
+
+```{figure} /images/cinaclaw-remmina.png
+   :width: 690px
+   :alt: Logging in to the RDP server with Remmina
+```
+
+<!-- Original image on the Asset Manager
+![Logging in to the RDP server with Remmina|690x567](https://assets.ubuntu.com/v1/83c7e6d7-cinaclaw-remmina.png)
+-->
+
+````
+
+````{tab-item} macOS
+:sync: macOS
+
+To connect on macOS, we can use the “Microsoft Remote Desktop” application, from the Mac App Store.
+
+````
+
+````{tab-item} Windows
+:sync: Windows
+
+On Windows, we can connect to the RDP server with the “Remote Desktop Connection” application. There, we enter the virtual machine’s IP address, set the session to XOrg and enter the username and password we created on the previous step.
+
+````
+
+`````
+
+And we are done... a graphical desktop!
+
+## Using X11 forwarding
+
+It might be the case that we only want cinaclaw to launch one application and to see only that window, without having the need for a complete desktop. It turns out that this setup is simpler than the RDP approach, because we do not need the cinaclaw instance to deploy a full desktop. Instead, we can use X11 to connect the applications in the instance with the graphical capabilities of the host.
+
+`````{tab-set}
+
+````{tab-item} Linux
+:sync: Linux
+
+Linux runs X by default, so no extra software in the host is needed.
+
+On Linux, we can use authentication in X forwarding to add a bit more security. However, we will forward through SSH to avoid struggling with `xauth`. Our user in the host will log in to the cinaclaw instance through SSH, so that we can pass extra parameters to it.
+
+To make this possible, copy your public key, stored in `~/.ssh/id_rsa.pub`, to the list of authorised keys of the instance, into the file `~/.ssh/authorized_keys`. Remember to replace the instance name used in the example with yours:
+
+```{code-block} text
+cinaclaw exec headbanging-squid -- bash -c "echo `cat ~/.ssh/id_rsa.pub` >> ~/.ssh/authorized_keys"
+```
+
+```{note}
+If the file `~/.ssh/id_rsa.pub` does not exist, it means that you need to create your SSH keys. Use `ssh-keygen` to create them and then run the previous command again.
+```
+
+Check the IP address of the instance, using `cinaclaw info headbanging-squid` Finally, log in to the instance using X forwarding using the command (replace `xx.xx.xx.xx` with the IP address obtained above):
+
+```{code-block} text
+ssh -X ubuntu@xx.xx.xx.xx
+```
+
+Test the setting running a program of your choice on the instance; for example:
+
+```{code-block} text
+sudo apt -y install x11-apps
+xlogo &
+```
+
+```{figure} /images/cinaclaw-xlogo.png
+   :width: 420px
+   :alt: Xlogo on Linux
+```
+
+<!-- Original image on the Asset Manager
+![Xlogo on Linux|420x455](https://assets.ubuntu.com/v1/657475f0-cinaclaw-xlogo.png)
+-->
+
+A small window containing the X logo will show up. Done!
+
+````
+
+````{tab-item} macOS
+:sync: macOS
+
+The first step in Mac is to make sure a X server is running. The easiest way is to install [XQuartz](https://www.xquartz.org).
+
+Once the X server is running, the procedure for macOS is the same as for Linux.
+
+```{note}
+Note to Apple Silicon users: some applications requiring OpenGL will not work through X11 forwarding.
+```
+
+````
+
+````{tab-item} Windows
+:sync: Windows
+
+Windows knows nothing about X, therefore we need to install an X server. Here we will use [VcXsrv](https://sourceforge.net/projects/vcxsrv/). Other options would be [Xming](http://www.straightrunning.com/XmingNotes/) (the newest versions are paid, but older versions can still be downloaded for free from their [SourceForge site](https://sourceforge.net/projects/xming/)) or installing an X server in [Cygwin](https://cygwin.com/).
+
+The first step would be thus to install VcXsrv and run the X server through the newly created start menu entry "XLaunch". Some options will be displayed. In the first screen, select "Multiple windows" and set the display number; leaving it in -1 is a safe option. The "Next" button brings you to the "Client startup" window, where you should select "Start no client". Click "Next" to go to the "Extra settings" screen, where you should activate the option "Disable access control". When you click "Next" you will be given the option to save the settings, and finally you can start the X server.
+
+An icon will show up in the dock: you are done with the X server!
+
+To configure the client (that is, the cinaclaw instance) you will need the host IP address; you can obtain it with the console command `ipconfig`.
+
+Then, start the instance and set the `DISPLAY` environment variable to the server display on the host IP (replace `xx.xx.xx.xx` with the IP address obtained above):
+
+```{code-block} text
+export DISPLAY=xx.xx.xx.xx:0.0
+```
+
+You are done, and you can now test forwarding running a program of your choice on the instance; for example:
+
+```{code-block} text
+sudo snap install firefox
+firefox &
+```
+
+```{figure} /images/cinaclaw-windows-desktop-firefox.jpeg
+   :width: 690px
+   :alt: Firefox running on a cinaclaw instance
+```
+
+<!-- Original image on the Asset Manager
+![Firefox running on a cinaclaw instance|690x388](https://assets.ubuntu.com/v1/82019ef0-cinaclaw-windows-desktop-firefox.jpeg)
+-->
+
+````
+
+`````
+
+<!-- Discourse contributors
+<small>**Contributors:** @andreitoterman , @luisp , @ricab , @gzanchi @dan-roscigno </small>
+-->

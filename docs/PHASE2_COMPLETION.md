@@ -2,7 +2,7 @@
 
 **完成时间**: 2026-04-01  
 **提交哈希**: `53f0d4f`  
-**GitHub**: https://github.com/cinagroup/cinaroom/commit/53f0d4f  
+**GitHub**: https://github.com/cinagroup/cinaseek/commit/53f0d4f  
 
 ---
 
@@ -48,7 +48,7 @@
 5. 用 code 换取 access_token
 6. 用 token 获取用户信息
 7. 在本地数据库查找或创建用户
-8. 生成 CinaRoom JWT Token
+8. 生成 CinaSeek JWT Token
 9. 返回前端，完成登录
 ```
 
@@ -123,7 +123,7 @@ CINATOKEN_SCOPES=user:read user:email
 **UI 布局**:
 ```
 ┌─────────────────────────────────┐
-│     CinaRoom                    │
+│     CinaSeek                    │
 │  你的云端开发工作室              │
 ├─────────────────────────────────┤
 │  【使用 CinaToken 登录】         │
@@ -226,7 +226,7 @@ CINATOKEN_SCOPES=user:read user:email
 1. 登录 CinaToken 管理后台（https://cinatoken.com/admin）
 2. 进入"OAuth 应用管理"
 3. 创建新应用：
-   - **应用名称**: CinaRoom
+   - **应用名称**: CinaSeek
    - **回调地址**: http://localhost:3000/oauth/callback
    - **Scopes**: user:read user:email
 4. 获取 `Client ID` 和 `Client Secret`
@@ -237,7 +237,7 @@ CINATOKEN_SCOPES=user:read user:email
 
 ```bash
 # 替换为实际值
-CINATOKEN_CLIENT_ID=cinaroom_client_xxx
+CINATOKEN_CLIENT_ID=cinaseek_client_xxx
 CINATOKEN_CLIENT_SECRET=sk_xxx
 ```
 
@@ -245,7 +245,7 @@ CINATOKEN_CLIENT_SECRET=sk_xxx
 
 ```bash
 # 在 PostgreSQL 主库执行
-psql -h 43.156.66.122 -U cinaroom -d cinatoken
+psql -h 43.156.66.122 -U cinaseek -d cinatoken
 
 # 执行迁移 SQL
 ALTER TABLE users ADD COLUMN cinatoken_id INTEGER UNIQUE;
@@ -292,7 +292,7 @@ npm run dev
 
 ### Phase 3 - K8s 部署（截止：2026-04-14）
 
-1. **注册域名** `cinaroom.run`（预计 ¥60/年）
+1. **注册域名** `cinaseek.run`（预计 ¥60/年）
 2. **配置 Cloudflare DNS**
 3. **配置 Cloudflare Tunnel**
 4. **更新 K8s Secret**（OAuth 凭证）

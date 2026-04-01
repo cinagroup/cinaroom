@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 CinaRoom Kubernetes 部署脚本"
+echo "🚀 CinaSeek Kubernetes 部署脚本"
 echo "================================"
 
 # 检查 kubectl
@@ -18,7 +18,7 @@ kubectl cluster-info || {
 }
 
 # 创建 Namespace
-echo "📦 创建 cinaroom namespace..."
+echo "📦 创建 cinaseek namespace..."
 kubectl apply -f deploy/k8s/namespace.yaml
 
 # 创建 ConfigMap
@@ -42,16 +42,16 @@ kubectl apply -f deploy/k8s/ingress.yaml
 # 查看状态
 echo ""
 echo "📊 部署状态："
-kubectl get all -n cinaroom
+kubectl get all -n cinaseek
 
 echo ""
 echo "✅ 部署完成！"
 echo ""
 echo "下一步："
-echo "1. 注册域名 cinaroom.run 并配置 DNS"
+echo "1. 注册域名 cinaseek.run 并配置 DNS"
 echo "2. 配置 Cloudflare Tunnel"
 echo "3. 申请 CinaToken OAuth 客户端凭证"
 echo "4. 更新 Secret 中的密码和密钥"
 echo "5. 重新部署以应用更新"
 echo ""
-echo "查看日志：kubectl logs -n cinaroom -l app=cinaroom -f"
+echo "查看日志：kubectl logs -n cinaseek -l app=cinaseek -f"

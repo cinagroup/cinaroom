@@ -1,0 +1,9 @@
+cinaclaw   Client version
+cinaclawd  Daemon version
+
+##################################################
+update title information
+update description information
+
+Go here for more information: http://cinaclaw.web
+##################################################

@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cinaroom-frontend
-  namespace: cinaroom
+  name: cinaseek-frontend
+  namespace: cinaseek
   labels:
-    app: cinaroom
+    app: cinaseek
     component: frontend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: cinaroom
+      app: cinaseek
       component: frontend
   template:
     metadata:
       labels:
-        app: cinaroom
+        app: cinaseek
         component: frontend
     spec:
       containers:
       - name: frontend
-        image: cinagroup/cinaroom-fe:latest
+        image: cinagroup/cinaseek-fe:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 80
@@ -48,10 +48,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: cinaroom-frontend
-  namespace: cinaroom
+  name: cinaseek-frontend
+  namespace: cinaseek
   labels:
-    app: cinaroom
+    app: cinaseek
     component: frontend
 spec:
   type: ClusterIP
@@ -61,5 +61,5 @@ spec:
     protocol: TCP
     name: http
   selector:
-    app: cinaroom
+    app: cinaseek
     component: frontend

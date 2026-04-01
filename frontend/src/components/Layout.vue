@@ -2,7 +2,7 @@
   <el-container class="layout-container">
     <el-aside :width="isCollapse ? '64px' : '220px'" class="sidebar">
       <div class="logo">
-        <span v-if="!isCollapse">CinaRoom</span>
+        <span v-if="!isCollapse">CinaSeek</span>
         <span v-else>MP</span>
       </div>
       <el-menu
