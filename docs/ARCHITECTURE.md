@@ -38,7 +38,7 @@
 ## 数据流
 
 ```
-1. 用户访问 https://user.cinaseek.run
+1. 用户访问 https://user.cinaseek.ai
 2. Cloudflare Tunnel 转发至云端 Go 服务
 3. Go 服务通过 WebSocket 查找用户端连接
 4. 请求转发至用户端 Go 客户端

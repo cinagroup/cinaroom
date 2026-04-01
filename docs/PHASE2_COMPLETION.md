@@ -292,7 +292,7 @@ npm run dev
 
 ### Phase 3 - K8s 部署（截止：2026-04-14）
 
-1. **注册域名** `cinaseek.run`（预计 ¥60/年）
+1. **注册域名** `cinaseek.ai`（预计 ¥60/年）
 2. **配置 Cloudflare DNS**
 3. **配置 Cloudflare Tunnel**
 4. **更新 K8s Secret**（OAuth 凭证）

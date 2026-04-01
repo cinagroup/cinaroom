@@ -42,8 +42,8 @@ CinaGroup 技术生态
 
 | 项目 | 配置 |
 |------|------|
-| **域名** | cinaseek.run（待注册） |
-| **API 域名** | api.cinaseek.run（待注册） |
+| **域名** | cinaseek.ai（待注册） |
+| **API 域名** | api.cinaseek.ai（待注册） |
 | **GitHub 仓库** | cinagroup/cinaseek |
 | **Docker 镜像** | cinagroup/cinaseek:* |
 | **数据库 Schema** | cinaseek（独立 schema） |

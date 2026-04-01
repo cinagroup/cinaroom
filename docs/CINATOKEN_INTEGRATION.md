@@ -199,7 +199,7 @@ spec:
 1. 登录 Uptime Kuma（现有实例）
 2. 添加新监控：
    - **名称**: CinaSeek API
-   - **URL**: https://api.cinaseek.run/health
+   - **URL**: https://api.cinaseek.ai/health
    - **检测频率**: 5 分钟（与 CinaToken 一致）
    - **告警渠道**: 企业微信 + 邮件（复用现有配置）
 
@@ -209,7 +209,7 @@ spec:
 2. ⏳ 集成 CinaToken OAuth（后端）
 3. ⏳ 调整前端登录页面
 4. ⏳ 创建 K8s 部署配置
-5. ⏳ 注册域名 cinaseek.run
+5. ⏳ 注册域名 cinaseek.ai
 6. ⏳ 配置 Cloudflare SSL
 
 ---
