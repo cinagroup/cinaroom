@@ -1,0 +1,41 @@
+# Cloudflare Tunnel 配置 — CinaSeek Production
+# 部署到: /etc/cloudflared/config.yml
+
+tunnel: cinaseek-production
+credentials-file: /etc/cloudflared/credentials.json
+
+# 日志配置
+# logfile: /var/log/cloudflared.log
+# loglevel: info
+
+ingress:
+  # 前端 — Next.js / Nuxt
+  - hostname: cinaseek.ai
+    service: http://localhost:3000
+    originRequest:
+      noTLSVerify: false
+      # 启用 HTTP/2 回源
+      http2Origin: true
+
+  # API 后端
+  - hostname: api.cinaseek.ai
+    service: http://localhost:8080
+    originRequest:
+      noTLSVerify: false
+      http2Origin: true
+      # API 超时设置
+      connectTimeout: 30s
+      noHappyEyeballs: true
+
+  # WebSocket 服务
+  - hostname: ws.cinaseek.ai
+    service: ws://localhost:8081
+    originRequest:
+      noTLSVerify: false
+      # WebSocket 长连接设置
+      connectTimeout: 30s
+      keepAliveTimeout: 300s
+      keepAliveInterval: 30s
+
+  # 兜底规则（必须放在最后）
+  - service: http_status:404

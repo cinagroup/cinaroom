@@ -1,0 +1,30 @@
+[Unit]
+Description=Cloudflared Tunnel for CinaSeek
+After=network.target
+# 如果使用 Nginx 反代，取消下行注释
+# After=network.target nginx.service
+
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/cloudflared --config /etc/cloudflared/config.yml tunnel run
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=0
+
+# 安全加固
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/etc/cloudflared /var/log
+PrivateTmp=true
+
+# 资源限制
+LimitNOFILE=65535
+
+# 日志输出到 journal
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cloudflared
+
+[Install]
+WantedBy=multi-user.target

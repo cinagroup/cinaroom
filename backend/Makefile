@@ -1,5 +1,17 @@
 .PHONY: help build run test clean docker-build docker-run migrate dev prod
 
+# 生成 protobuf Go 代码
+proto:
+	@echo "Generating protobuf Go code..."
+	@mkdir -p proto/cinaclaw
+	protoc \
+		--go_out=proto/cinaclaw --go_opt=paths=source_relative \
+		--go-grpc_out=proto/cinaclaw --go-grpc_opt=paths=source_relative \
+		-I ../cinaclaw/src/rpc/ \
+		-I /usr/include/ \
+		../cinaclaw/src/rpc/cinaclaw.proto
+	@echo "Proto generation complete"
+
 # 默认目标
 help:
 	@echo "Multipass Backend - Makefile Commands"
@@ -19,8 +31,8 @@ help:
 # 编译应用
 build:
 	@echo "Building application..."
-	go build -o bin/multipass-backend cmd/server/main.go
-	@echo "Build complete: bin/multipass-backend"
+	go build -o bin/cinaseek-backend cmd/server/main.go
+	@echo "Build complete: bin/cinaseek-backend"
 
 # 运行应用
 run:
@@ -36,13 +48,13 @@ test:
 clean:
 	@echo "Cleaning..."
 	rm -rf bin/
-	rm -f multipass-backend
+	rm -f cinaseek-backend
 	@echo "Clean complete"
 
 # 构建 Docker 镜像
 docker-build:
 	@echo "Building Docker image..."
-	docker build -t multipass-backend:latest .
+	docker build -t cinaseek-backend:latest .
 	@echo "Docker image built"
 
 # 运行 Docker Compose
@@ -74,7 +86,7 @@ dev:
 # 生产环境编译
 prod:
 	@echo "Building for production..."
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-s -w" -o bin/multipass-backend cmd/server/main.go
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-s -w" -o bin/cinaseek-backend cmd/server/main.go
 	@echo "Production build complete"
 
 # 代码格式化
@@ -111,19 +123,19 @@ migrate:
 # 创建数据库
 db-create:
 	@echo "Creating database..."
-	psql -U postgres -c "CREATE DATABASE multipass;" || true
+	psql -U postgres -c "CREATE DATABASE cinaseek;" || true
 	@echo "Database created"
 
 # 备份数据库
 db-backup:
 	@echo "Backing up database..."
-	pg_dump -U postgres multipass > backup_$(shell date +%Y%m%d_%H%M%S).sql
+	pg_dump -U postgres cinaseek > backup_$(shell date +%Y%m%d_%H%M%S).sql
 	@echo "Backup complete"
 
 # 恢复数据库
 db-restore:
 	@echo "Restoring database from backup..."
-	@read -p "Enter backup file: " file; psql -U postgres multipass < $$file
+	@read -p "Enter backup file: " file; psql -U postgres cinaseek < $$file
 	@echo "Restore complete"
 
 # 压力测试（需要 wrk）
