@@ -1,0 +1,86 @@
+/*
+ * Copyright (C) Canonical, Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 3.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+#pragma once
+
+#include <cinaseek/cert_provider.h>
+#include <cinaseek/cert_store.h>
+#include <cinaseek/days.h>
+#include <cinaseek/image_host/vm_image_host.h>
+#include <cinaseek/logging/logger.h>
+#include <cinaseek/logging/multiplexing_logger.h>
+#include <cinaseek/name_generator.h>
+#include <cinaseek/path.h>
+#include <cinaseek/rpc/cinaseek.grpc.pb.h>
+#include <cinaseek/ssh/ssh_key_provider.h>
+#include <cinaseek/update_prompt.h>
+#include <cinaseek/url_downloader.h>
+#include <cinaseek/virtual_machine_factory.h>
+#include <cinaseek/vm_image_vault.h>
+
+#include <QNetworkProxy>
+
+#include <memory>
+#include <vector>
+
+namespace cinaseek
+{
+struct DaemonConfig
+{
+    ~DaemonConfig();
+    const std::unique_ptr<URLDownloader> url_downloader;
+    const std::unique_ptr<VirtualMachineFactory> factory;
+    const std::vector<std::unique_ptr<VMImageHost>> image_hosts;
+    const std::unique_ptr<VMImageVault> vault;
+    const std::unique_ptr<NameGenerator> name_generator;
+    const std::unique_ptr<SSHKeyProvider> ssh_key_provider;
+    const std::unique_ptr<CertProvider> cert_provider;
+    const std::unique_ptr<CertStore> client_cert_store;
+    const std::unique_ptr<UpdatePrompt> update_prompt;
+    const std::shared_ptr<logging::MultiplexingLogger> logger;
+    const std::unique_ptr<QNetworkProxy> network_proxy;
+    const cinaseek::Path cache_directory;
+    const cinaseek::Path data_directory;
+    const std::string server_address;
+    const std::string ssh_username;
+    const std::chrono::hours image_refresh_timer;
+};
+
+struct DaemonConfigBuilder
+{
+    std::unique_ptr<URLDownloader> url_downloader;
+    std::unique_ptr<VirtualMachineFactory> factory;
+    std::vector<std::unique_ptr<VMImageHost>> image_hosts;
+    std::unique_ptr<VMImageVault> vault;
+    std::unique_ptr<NameGenerator> name_generator;
+    std::unique_ptr<SSHKeyProvider> ssh_key_provider;
+    std::unique_ptr<CertProvider> cert_provider;
+    std::unique_ptr<CertStore> client_cert_store;
+    std::unique_ptr<UpdatePrompt> update_prompt;
+    std::unique_ptr<logging::Logger> logger;
+    std::unique_ptr<QNetworkProxy> network_proxy;
+    cinaseek::Path cache_directory;
+    cinaseek::Path data_directory;
+    std::string server_address;
+    std::string ssh_username;
+    cinaseek::days days_to_expire{14};
+    std::chrono::hours image_refresh_timer{6};
+    cinaseek::logging::Level verbosity_level{cinaseek::logging::Level::info};
+
+    std::unique_ptr<const DaemonConfig> build();
+};
+} // namespace cinaseek

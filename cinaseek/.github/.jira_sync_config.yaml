@@ -1,0 +1,11 @@
+# This configuration is monitored by https://github.com/canonical/gh-jira-sync-bot.
+settings:
+  jira_project_key: MULTI
+  labels:
+    - jira
+  label_mapping:
+    enhancement: Story
+  status_mapping:
+    opened: Untriaged
+    closed: Done
+    not_planned: rejected

@@ -20,28 +20,42 @@
 
 ## 🏗️ 架构
 
+**CinaRoom = Cinaseek（VM引擎）+ Go中转服务 + Vue3面板 + WebSocket终端**
+
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                      Cloudflare Tunnel                       │
-│                    (HTTPS 自动加密)                           │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ↓
-┌─────────────────────────────────────────────────────────────┐
-│                   CinaRoom Backend (Go + Gin)                │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
-│  │  VM Manager  │  │ Mount Manager│  │OpenClaw Mgr  │       │
-│  └──────────────┘  └──────────────┘  └──────────────┘       │
-└─────────────────────────────────────────────────────────────┘
-         │                    │                    │
-         ↓                    ↓                    ↓
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│  PostgreSQL 15  │ │     Redis       │ │   CinaRoom VM   │
-│  (主从复制)     │ │   (会话存储)    │ │   (虚拟机)      │
-└─────────────────┘ └─────────────────┘ └─────────────────┘
+CinaRoom 架构
+├── cinaseek/          # Cinaseek 虚拟机引擎（基于 Multipass fork）
+│   ├── src/           # C++ 源码
+│   ├── include/       # 头文件
+│   └── snap/          # Snap 打包
+├── backend/           # Go 云端中转 API 服务
+├── frontend/          # Vue3 Web 管理面板
+├── websocket/         # WebSocket 终端服务
+├── deploy/            # K8s 部署配置
+└── docs/              # 文档
 ```
 
+**数据流：** 用户端安装 Cinaseek → Go客户端连接云端 → Cloudflare Tunnel → Web面板
+
+```
+┌──────────────┐    ┌──────────────────┐    ┌─────────────────┐    ┌──────────────┐    ┌──────────────┐
+│  用户浏览器   │ →  │ Cloudflare Tunnel │ →  │ 云端Go中转服务   │ →  │ 用户端Go客户端 │ →  │ Cinaseek引擎  │
+└──────────────┘    └──────────────────┘    └─────────────────┘    └──────────────┘    └──────────────┘
+                                                                                          │
+                                                                                          ↓
+                                                                                   ┌──────────────┐
+                                                                                   │ Multipass VM  │
+                                                                                   └──────────────┘
+```
+
+- **Cinaseek** 基于 Canonical Multipass GPLv3，自主品牌运营，深度定制适配 CinaRoom 场景
+
 ## 📦 技术栈
+
+### 虚拟机引擎
+- Cinaseek（基于 Canonical Multipass fork，GPLv3）
+- C++17，CMake，gRPC，Protobuf
+- 支持多平台：Linux（QEMU/LXD）、macOS（HyperKit）、Windows（Hyper-V）
 
 ### 前端
 - Vue 3.4 + Vite 5 + TypeScript
@@ -110,6 +124,12 @@ cd websocket
 
 ```
 cinaroom/
+├── cinaseek/           # Cinaseek 虚拟机引擎（基于 Multipass fork）
+│   ├── src/            # C++ 源码
+│   ├── include/        # 头文件
+│   ├── snap/           # Snap 打包配置
+│   ├── CMakeLists.txt  # 构建配置
+│   └── README.md       # Cinaseek 说明
 ├── frontend/           # Vue3 前端项目
 │   ├── src/
 │   │   ├── components/ # 组件
@@ -143,12 +163,13 @@ cinaroom/
 │   │   └── ingress.yaml
 │   └── docker-compose.yml
 ├── docs/               # 文档
-│   ├── BRAND.md        # 品牌定位
-│   ├── CINASEEK_INTEGRATION.md  # CinaSeek 集成指南
-│   └── DEPLOYMENT.md   # 部署指南
+│   ├── ARCHITECTURE.md       # 架构设计文档
+│   ├── EXECUTION_PLAN.md     # 落地执行计划
+│   ├── CINASEEK_INTEGRATION.md # CinaSeek 集成指南
+│   └── DEPLOYMENT.md         # 部署指南
 ├── scripts/            # 自动化脚本
 │   └── deploy.sh
-├── BRAND.md
+├── BRAND.md            # 品牌定位
 └── README.md
 ```
 

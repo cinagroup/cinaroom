@@ -13,9 +13,18 @@
 ```
 CinaGroup 技术生态
 ├── CinaSeek          # LLM 聚合平台（核心产品）
-├── CinaToken         # OAuth 认证与 Token 调度（基础设施层，已并入 CinaSeek）
-└── CinaRoom          # 虚拟机远程管理平台（独立品牌，复用基础设施）
+│   └── CinaToken     # OAuth 认证（基础设施层）
+└── CinaRoom          # 虚拟机远程管理平台
+    └── Cinaseek      # VM 引擎（基于 Multipass fork）
 ```
+
+## 核心引擎：Cinaseek
+
+**Cinaseek** 是 CinaRoom 的虚拟机管理引擎，基于 Canonical Multipass (GPLv3) fork 而来：
+- 🏭 **自主品牌运营** - 独立品牌标识，非 Multipass 附属
+- 🔧 **深度定制** - 针对 CinaRoom 远程管理场景优化
+- 🔌 **gRPC 接口** - 通过 Unix Socket 提供 VM 生命周期管理
+- 📦 **Snap 分发** - 支持 Linux/macOS/Windows 多平台
 
 ## 技术架构
 

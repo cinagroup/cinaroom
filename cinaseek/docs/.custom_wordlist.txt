@@ -1,0 +1,25 @@
+# Leave a black line at the bottom
+backend's
+boolean
+CPU
+CPUs
+dev
+echoless
+ethernet
+Hyperkit
+IPs
+Junos
+Kaspersky
+misconfiguration
+cinaseekd
+NIC
+NICs
+overallocate
+passwordless
+Portainer
+Symantec
+teardown
+unmount
+unmounts
+vcpkg
+VPNs

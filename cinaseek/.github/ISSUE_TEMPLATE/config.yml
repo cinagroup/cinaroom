@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://canonical.com/cinaseek/docs
+    about: See here about potential solutions to some common problems
+  - name: Forums
+    url: https://discourse.ubuntu.com/c/cinaseek
+    about: Please ask and answer questions here.
+  - name: "#cinaseek on Libera.Chat"
+    url: https://web.libera.chat/?channels=#cinaseek
+    about: Chat to us!

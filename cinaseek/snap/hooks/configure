@@ -1,0 +1,48 @@
+#!/bin/bash -e
+
+needs_restart=false
+config_file="$SNAP_COMMON/snap_config"
+daemon_config_file="$SNAP_DATA/config/multipassd/multipassd.conf"
+
+if [[ -a $config_file ]]; then
+    source $config_file
+fi
+
+driver="$(snapctl get driver)"
+
+if [[ -n $driver && $driver != $driver_saved ]]; then
+    echo -e '`snap set` is no longer used for driver selection, please use:\n'
+    echo "sudo multipass set local.driver=$( echo $driver | awk '{print tolower($0)}' )"
+    exit 1
+elif [[ $driver_saved != "" ]]; then
+    # we should only ever be here once on conversion from `snap set` to `multipass set`,
+    # it's relatively safe to just overwrite the daemon file then
+    mkdir -p $( dirname $daemon_config_file )
+    echo -e "[General]\nlocal.driver=$( echo $driver_saved | awk '{print tolower($0)}' )" > $daemon_config_file
+    snapctl set driver=""
+    driver_saved=""
+fi
+
+http_proxy="$(snapctl get proxy.http)"
+
+if [[ $http_proxy != $http_proxy_saved ]]; then
+    http_proxy_saved=$http_proxy
+    needs_restart=true
+fi
+
+https_proxy="$(snapctl get proxy.https)"
+
+if [[ $https_proxy != $https_proxy_saved ]]; then
+    https_proxy_saved=$https_proxy
+    needs_restart=true
+fi
+
+{
+    echo "driver_saved=${driver_saved}"
+    echo "http_proxy_saved=${http_proxy_saved}"
+    echo "https_proxy_saved=${https_proxy_saved}"
+} > "${config_file}"
+
+if [[ $needs_restart = true ]]; then
+    snapctl restart $SNAP_NAME
+fi

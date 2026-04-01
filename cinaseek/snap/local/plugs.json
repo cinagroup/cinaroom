@@ -1,0 +1,8 @@
+{
+  "cinaseek-support": {
+    "allow-installation": "true"
+  },
+  "home": {
+    "allow-connection": "true"
+  }
+}

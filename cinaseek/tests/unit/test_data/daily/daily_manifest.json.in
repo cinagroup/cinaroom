@@ -1,0 +1,82 @@
+{
+  "content_id": "com.ubuntu.cloud:daily:download",
+  "datatype": "image-downloads",
+  "format": "products:1.0",
+  "license": "http://www.canonical.com/intellectual-property-policy",
+  "products": {
+    "com.ubuntu.cloud.daily:server:17.10:@MANIFEST_ARCH@": {
+      "aliases": "17.10,a,artful,devel",
+      "arch": "@MANIFEST_ARCH@",
+      "os": "ubuntu",
+      "release": "artful",
+      "release_codename": "Artful Aardvark",
+      "release_title": "17.10",
+      "support_eol": "2018-07-19",
+      "supported": true,
+      "version": "17.10",
+      "versions": {
+        "20170701": {
+          "items": {
+            "disk1.img": {
+              "ftype": "disk1.img",
+              "md5": "08b44bc9ce17bcac5e7e931a175874be",
+              "path": "oldest-artful.img",
+              "sha256": "84abe3cdb379b8d466b70463303c749b22a19023b18dac49ceedc200dfa0e005",
+              "size": 350158848
+            }
+          },
+          "label": "daily",
+          "pubname": "ubuntu-artful-daily-@MANIFEST_ARCH@-server-20170701"
+        },
+        "20170702": {
+          "items": {
+            "disk1.img": {
+              "ftype": "disk1.img",
+              "md5": "66a9c4432df5434abd1cf57d44c032d5",
+              "path": "newest-artful.img",
+              "sha256": "c09f123b9589c504fe39ec6e9ebe5188c67be7d1fc4fb80c969bf877f5a8333a",
+              "size": 350486528
+            }
+          },
+          "label": "daily",
+          "pubname": "ubuntu-artful-daily-@MANIFEST_ARCH@-server-20170702"
+        }
+      }
+    },
+    "com.ubuntu.cloud:server:17.04:@MANIFEST_ARCH@": {
+      "aliases": "17.04,z,zesty",
+      "arch": "@MANIFEST_ARCH@",
+      "os": "ubuntu",
+      "release": "zesty",
+      "release_codename": "Zesty Zapus",
+      "release_title": "17.04",
+      "support_eol": "2018-01-25",
+      "supported": true,
+      "version": "17.04",
+      "versions": {
+        "20170619.1": {
+          "items": {
+            "disk1.img": {
+              "ftype": "disk1.img",
+              "md5": "cc2bc360fec3086edcd4e69d7d8113fc",
+              "path": "zesty_newest.img",
+              "sha256": "ab115b83e7a8bebf3d3a02bf55ad0cb75a0ed515fcbc65fb0c9abe76c752921c",
+              "size": 346882048
+            },
+            "lxd.tar.xz": {
+              "combined_squashfs_sha256": "f50337be60f7fce4ddd71397285490115e208aeb37565b8d77529cb352cdad05",
+              "ftype": "lxd.tar.xz",
+              "md5": "21a945923eff127e1553d581c8872bb6",
+              "path": "server/releases/zesty/release-20170619.1/ubuntu-17.04-server-cloudimg-@MANIFEST_ARCH@-lxd.tar.xz",
+              "sha256": "c258ec70a733b5ea22c7b8a608d2b2e95fb1cf6ec01e0ffba367bd46baf1f8e1",
+              "size": 848
+            }
+          },
+          "label": "release",
+          "pubname": "ubuntu-zesty-17.04-@MANIFEST_ARCH@-server-20170619.1"
+        }
+      }
+    }
+  },
+  "updated": "Wed, 18 Oct 2017 12:14:50 +0000"
+}

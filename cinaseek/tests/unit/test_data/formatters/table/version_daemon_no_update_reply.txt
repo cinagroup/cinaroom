@@ -1,0 +1,2 @@
+cinaseek   Client version
+cinaseekd  Daemon version

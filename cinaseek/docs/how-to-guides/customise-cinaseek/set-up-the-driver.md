@@ -1,0 +1,384 @@
+(how-to-guides-customise-cinaseek-set-up-the-driver)=
+# How to set up the driver
+
+> See also: {ref}`explanation-driver`, {ref}`reference-settings-local-driver`
+
+This document demonstrates how to choose, set up, and manage the drivers behind cinaseek. cinaseek already has sensible defaults, so this is an optional step.
+
+## Default driver
+
+`````{tab-set}
+
+````{tab-item} Linux
+:sync: Linux
+
+By default, cinaseek on Linux uses the `qemu` driver.
+
+````
+
+````{tab-item} macOS
+:sync: macOS
+
+By default, cinaseek on macOS uses the `qemu` driver.
+
+````
+
+````{tab-item} Windows
+:sync: Windows
+
+By default, cinaseek on Windows uses the `hyperv` driver.
+
+````
+
+`````
+
+## Install an alternative driver
+
+`````{tab-set}
+
+````{tab-item} macOS
+:sync: macOS
+
+An alternative option is to use VirtualBox.
+
+To switch the cinaseek driver to VirtualBox, run this command:
+
+```{code-block} text
+sudo cinaseek set local.driver=virtualbox
+```
+
+From now on, all instances started with `cinaseek launch` will use VirtualBox behind the scenes.
+
+````
+
+````{tab-item} Windows
+:sync: Windows
+
+If you want to (or have to), you can change the hypervisor that cinaseek uses to VirtualBox.
+
+To that end, install VirtualBox, if you haven't yet. You may find that you need to <a href="https://forums.virtualbox.org/viewtopic.php?f=6&t=88405#p423658">run the VirtualBox installer as administrator</a>.
+
+<!-- Sphinx doesn't like the & character in the above link, the only way to make it work is using basic HTML syntax. The link was:
+[run the VirtualBox installer as administrator](https://forums.virtualbox.org/viewtopic.php?f=6&t=88405#p423658)
+-->
+
+To switch the cinaseek driver to VirtualBox (also with Administrator privileges), run this command:
+
+```{code-block} powershell
+cinaseek set local.driver=virtualbox
+```
+
+From then on, all instances started with `cinaseek launch` will use VirtualBox behind the scenes.
+
+````
+
+`````
+
+## Use the driver to view cinaseek instances
+
+`````{tab-set}
+
+````{tab-item} Linux
+:sync: Linux
+
+You can view instances with libvirt in two ways, using the `virsh` CLI or the [`virt-manager` GUI](https://virt-manager.org/).
+
+To use the `virsh` CLI, launch an instance and then run the command `virsh list` (see [`man virsh`](https://manpages.ubuntu.com/manpages/questing/en/man1/virsh.1.html) for a command reference):
+
+```{code-block} text
+virsh list
+```
+
+The output will be similar to the following:
+
+```{code-block} text
+ Id   Name                   State
+--------------------------------------
+ 1    unaffected-gyrfalcon   running
+```
+Alternatively, to use the `virt-manager` GUI, ...
+
+```{figure} /images/cinaseek-virt-manager-gui.png
+   :width: 584px
+   :alt: Virtual Machine Manager GUI
+```
+
+<!-- Original image on the Asset Manager
+![Virtual Machine Manager GUI|584x344](https://assets.ubuntu.com/v1/51cf2c57-cinaseek-virt-manager-gui.png)
+-->
+
+````
+
+````{tab-item} macOS
+:sync: macOS
+
+cinaseek runs as the `root` user, so to see the instances in  VirtualBox, or through the `VBoxManage` command, you have to run those as `root`, too. To see the instances in VirtualBox, use the command:
+
+```{code-block} text
+sudo VirtualBox
+```
+
+```{figure} /images/cinaseek-macos-virtualbox-manager.png
+   :width: 720px
+   :alt: cinaseek instances in VirtualBox
+```
+
+<!-- Original image on the Asset Manager
+![cinaseek instances in VirtualBox](https://assets.ubuntu.com/v1/9c959eed-cinaseek-macos-virtualbox-manager.png)
+-->
+
+And, to list the instances on the command line, run:
+
+```{code-block} text
+sudo VBoxManage list vms
+```
+
+Sample output:
+```{code-block} text
+"primary" {395d5300-557d-4640-a43a-48100b10e098}
+```
+
+```{note}
+You can still use the `cinaseek` client and the system menu icon, and any changes you make to the configuration of the instances in VirtualBox will be persistent. They may not be represented in cinaseek commands such as `cinaseek info` , though.
+[/note]
+
+````
+
+````{tab-item} Windows
+:sync: Windows
+
+cinaseek runs as the _System_ account, so to see the instances in VirtualBox, or through the `VBoxManage` command, you have to run those as that user via [`PsExec -s`](https://docs.microsoft.com/en-us/sysinternals/downloads/psexec). Download and unpack [PSTools.zip](https://download.sysinternals.com/files/PSTools.zip) in your *Downloads* folder, and in an administrative PowerShell, run:
+
+```{code-block} powershell
+& $env:USERPROFILE\Downloads\PSTools\PsExec.exe -s -i $env:VBOX_MSI_INSTALL_PATH\VirtualBox.exe
+```
+
+```{figure} /images/cinaseek-windows-virtualbox-manager.png
+   :width: 720px
+   :alt: cinaseek instances in VirtualBox
+```
+
+<!-- Original image on the Asset Manager
+![cinaseek instances in VirtualBox](https://assets.ubuntu.com/v1/edce2443-cinaseek-windows-virtualbox-manager.png)
+-->
+
+To list the instances on the command line:
+
+```{code-block} powershell
+& $env:USERPROFILE\Downloads\PSTools\PsExec.exe -s $env:VBOX_MSI_INSTALL_PATH\VBoxManage.exe list vms
+```
+
+Sample output:
+
+```{code-block} powershell
+"primary" {05a04fa0-8caf-4c35-9d21-ceddfe031e6f}
+```
+
+```{note}
+You can still use the `cinaseek` client and the system menu icon, and any changes you make to the configuration of the instances in VirtualBox will be persistent. They may not be represented in cinaseek commands such as `cinaseek info`, though.
+[/note]
+
+````
+
+`````
+
+
+## Use VirtualBox to set up port forwarding for a cinaseek instance
+
+`````{tab-set}
+
+````{tab-item} Linux
+:sync: Linux
+
+This option only applies to macOS and Windows systems.
+
+````
+
+````{tab-item} macOS
+:sync: macOS
+
+To expose a service running inside the instance on your host, you can use [VirtualBox's port forwarding feature](https://www.virtualbox.org/manual/ch06.html#natforward), for example:
+
+```{code-block} text
+sudo VBoxManage controlvm "primary" natpf1 "myservice,tcp,,8080,,8081"
+```
+
+You can then open, say, https://localhost:8081/, and the service running inside the instance on port 8080 will be exposed.
+
+````
+
+````{tab-item} Windows
+:sync: Windows
+
+To expose a service running inside the instance on your host, you can use [VirtualBox's port forwarding feature](https://www.virtualbox.org/manual/ch06.html#natforward), for example:
+
+```{code-block} powershell
+& $env:USERPROFILE\Downloads\PSTools\PsExec.exe -s $env:VBOX_MSI_INSTALL_PATH\VBoxManage.exe controlvm "primary" natpf1 "myservice,tcp,,8080,,8081"
+```
+
+You can then open, say, https://localhost:8081/, and the service running inside the instance on port 8080 will be exposed.
+
+````
+
+`````
+
+## Use VirtualBox to set up network bridging for a cinaseek instance
+
+`````{tab-set}
+
+````{tab-item} Linux
+:sync: Linux
+
+This option only applies to macOS systems.
+
+````
+
+````{tab-item} macOS
+:sync: macOS
+
+An often requested cinaseek feature is network bridging. You can add a second network interface to the instance and expose it on your physical network.
+
+First, stop the instance:
+
+```{code-block} text
+cinaseek stop primary
+```
+
+Now, find the network interface you want to bridge with, running the command:
+
+```{code-block} text
+VBoxManage list bridgedifs | grep ^Name:
+```
+
+You want the identifier before the second colon; for example `en0` in the following sample output:
+
+```{code-block} text
+Name:            en0: Ethernet
+Name:            en1: Wi-Fi (AirPort)
+Name:            en2: Thunderbolt 1
+Name:            en3: Thunderbolt 2
+...
+```
+
+Finally, tell VirtualBox to use it as the "parent" for the second interface (for more information on this topic, see [VirtualBox documentation](https://www.virtualbox.org/manual/ch06.html#network_bridged)):
+
+```{code-block} text
+sudo VBoxManage modifyvm primary --nic2 bridged --bridgeadapter2 en0
+```
+
+```{caution}
+Do not touch --nic1 as that's used by cinaseek.
+```
+
+You can then start the instance again:
+
+```{code-block} text
+cinaseek start primary
+```
+
+To find the name of the new interface, run this command:
+
+```{code-block} text
+cinaseek exec primary ip link | grep DOWN
+```
+
+In the following sample output, the name of the interface that we are looking for is `enp0s8`:
+
+```{code-block} text
+3: enp0s8: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+```
+
+Now, configure that new interface (Ubuntu uses [Netplan](https://netplan.io/) for that):
+
+```{code-block} text
+cinaseek exec -- primary sudo bash -c "cat > /etc/netplan/60-bridge.yaml" <<EOF
+network:
+  ethernets:
+    enp0s8:                  # this is the interface name from above
+      dhcp4: true
+      dhcp4-overrides:       # this is needed so the default gateway
+        route-metric: 200    # remains with the first interface
+  version: 2
+EOF
+
+cinaseek exec primary sudo Netplan apply
+```
+
+Finally, find the IP of the instance given by your router:
+
+```{code-block} text
+cinaseek exec primary ip address show dev enp0s8 up
+```
+
+For example:
+
+```{code-block} text
+3: enp0s8: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 08:00:27:2a:5f:55 brd ff:ff:ff:ff:ff:ff
+    inet <b>10.2.0.39</b>/24 brd 10.2.0.255 scope global dynamic enp0s8
+       valid_lft 86119sec preferred_lft 86119sec
+    inet6 fe80::a00:27ff:fe2a:5f55/64 scope link
+       valid_lft forever preferred_lft forever
+```
+
+All the services running inside the instance should now be available on your physical network under https://&lt;instance IP&gt;/.
+
+````
+
+````{tab-item} Windows
+:sync: Windows
+
+This option only applies to macOS systems.
+
+````
+
+`````
+
+## Switch back to the default driver
+
+> See also: {ref}`reference-command-line-interface-stop`, {ref}`reference-settings-local-driver`
+
+`````{tab-set}
+
+````{tab-item} Linux
+:sync: Linux
+
+To switch back to the default `qemu` driver, first you need to stop all instances again:
+
+```{code-block} text
+cinaseek stop --all
+cinaseek set local.driver=qemu
+```
+
+Here, too, existing instances will be migrated.
+
+
+````
+
+````{tab-item} macOS
+:sync: macOS
+
+If you want to switch back to the default driver, run:
+
+```{code-block} text
+cinaseek set local.driver=qemu
+```
+
+Instances created with VirtualBox don't get transferred, but you can always come back to them.
+
+````
+
+````{tab-item} Windows
+:sync: Windows
+
+If you want to switch back to the default driver:
+
+```{code-block} text
+cinaseek set local.driver=hyperv
+```
+
+Instances created with VirtualBox don't get transferred, but you can always come back to them.
+
+````
+
+`````

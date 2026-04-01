@@ -1,0 +1,6 @@
+cinaseek: Client version
+cinaseekd: Daemon version
+update:
+  title: update title information
+  description: update description information
+  url: "http://cinaseek.web"
