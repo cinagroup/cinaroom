@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -278,7 +279,25 @@ func main() {
 	http.HandleFunc("/api/v1/ws/terminal", manager.HandleTerminal)
 	http.HandleFunc("/api/v1/ws/register", manager.HandleRegister)
 	http.HandleFunc("/api/v1/forward", manager.HandleForward)
+	
+	// Health check endpoint
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":    "ok",
+			"service":   "cinaseek-websocket",
+			"timestamp": time.Now().Format(time.RFC3339),
+		})
+	})
 
-	log.Printf("Server starting on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	addr := os.Getenv("WS_PORT")
+	if addr == "" {
+		addr = "8081"
+	}
+	if addr[0] != ':' {
+		addr = ":" + addr
+	}
+
+	log.Printf("WebSocket server starting on %s", addr)
+	log.Fatal(http.ListenAndServe(addr, nil))
 }

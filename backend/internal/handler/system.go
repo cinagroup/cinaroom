@@ -1,9 +1,6 @@
 package handler
 
 import (
-	"net/http"
-	"strconv"
-
 	"github.com/cinagroup/cinaseek/backend/internal/config"
 	"github.com/cinagroup/cinaseek/backend/internal/model"
 	"github.com/cinagroup/cinaseek/backend/internal/repository"
@@ -22,7 +19,7 @@ func NewSystemHandler(cfg *config.Config) *SystemHandler {
 
 // GetSystemSetting 获取系统设置
 func (h *SystemHandler) GetSystemSetting(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	_, exists := c.Get("userID")
 	if !exists {
 		response.Unauthorized(c, "未登录")
 		return
@@ -49,7 +46,7 @@ func (h *SystemHandler) GetSystemSetting(c *gin.Context) {
 
 // UpdateSystemSetting 更新系统设置
 func (h *SystemHandler) UpdateSystemSetting(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	_, exists := c.Get("userID")
 	if !exists {
 		response.Unauthorized(c, "未登录")
 		return

@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-	"net/http"
 	"strconv"
 
 	"github.com/cinagroup/cinaseek/backend/internal/config"

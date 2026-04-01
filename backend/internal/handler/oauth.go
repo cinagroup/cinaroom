@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -171,7 +170,7 @@ func (h *OAuthHandler) OAuthCallback(c *gin.Context) {
 
 // Logout 登出（撤销 CinaToken Token）
 func (h *OAuthHandler) Logout(c *gin.Context) {
-	userID, exists := c.Get("userID")
+	_, exists := c.Get("userID")
 	if !exists {
 		response.Unauthorized(c, "未登录")
 		return

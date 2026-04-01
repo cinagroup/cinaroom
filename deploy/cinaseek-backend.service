@@ -1,0 +1,23 @@
+[Unit]
+Description=CinaSeek Backend API Service
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/.openclaw/workspace/cinaroom/backend
+EnvironmentFile=/root/.openclaw/workspace/cinaroom/backend/.env
+ExecStart=/root/.openclaw/workspace/cinaroom/backend/bin/cinaseek-backend
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=cinaseek-backend
+
+# Security
+NoNewPrivileges=false
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
