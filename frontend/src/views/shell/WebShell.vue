@@ -74,7 +74,7 @@ const initTerminal = () => {
   term.open(terminalContainer.value)
   fitAddon.fit()
   
-  term.writeln('\x1b[1;32m欢迎使用 Multipass WebShell\x1b[0m')
+  term.writeln('\x1b[1;32m欢迎使用 CinaRoom WebShell\x1b[0m')
   term.writeln('\x1b[1;32m正在连接到虚拟机...\x1b[0m\n')
   
   // TODO: 建立 WebSocket 连接

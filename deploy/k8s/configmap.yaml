@@ -2,13 +2,13 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: cinaroom-config
-  namespace: multipass
+  namespace: cinaroom
 data:
   # 数据库配置
   DATABASE_HOST: "postgresql-master.cinatoken.svc.cluster.local"
   DATABASE_PORT: "5432"
   DATABASE_NAME: "cinatoken"
-  DATABASE_SCHEMA: "multipass"
+  DATABASE_SCHEMA: "cinaroom"
   
   # Redis 配置
   REDIS_HOST: "redis.cinatoken.svc.cluster.local"

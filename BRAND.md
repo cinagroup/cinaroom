@@ -37,7 +37,7 @@ CinaGroup 技术生态
 | **API 域名** | api.cinaroom.run（待注册） |
 | **GitHub 仓库** | cinagroup/cinaroom |
 | **Docker 镜像** | cinagroup/cinaroom:* |
-| **数据库 Schema** | multipass（独立 schema） |
+| **数据库 Schema** | cinaroom（独立 schema） |
 
 ## 核心功能
 

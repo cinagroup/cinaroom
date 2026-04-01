@@ -214,7 +214,7 @@ go test -v ./tests/oauth_test.go -run TestCinaTokenClient
 === RUN   TestCinaTokenClient_GetAuthorizationURL
 --- PASS: TestCinaTokenClient_GetAuthorizationURL (0.00s)
 PASS
-ok      multipass-backend/tests    0.003s
+ok      cinaroom-backend/tests    0.003s
 ```
 
 ### 运行所有 OAuth 测试

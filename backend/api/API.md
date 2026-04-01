@@ -1,4 +1,4 @@
-# Multipass Backend API 文档
+# CinaRoom Backend API 文档
 
 ## 基础信息
 
@@ -570,7 +570,7 @@ Authorization: Bearer <your_token>
 ```json
 {
   "key": "system_name",
-  "value": "Multipass 管理平台"
+  "value": "CinaRoom 管理平台"
 }
 ```
 

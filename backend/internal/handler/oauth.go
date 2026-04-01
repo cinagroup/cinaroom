@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"time"
 
-	"multipass-backend/internal/config"
-	"multipass-backend/internal/middleware"
-	"multipass-backend/internal/model"
-	"multipass-backend/internal/oauth"
-	"multipass-backend/internal/repository"
-	"multipass-backend/pkg/response"
+	"cinaroom-backend/internal/config"
+	"cinaroom-backend/internal/middleware"
+	"cinaroom-backend/internal/model"
+	"cinaroom-backend/internal/oauth"
+	"cinaroom-backend/internal/repository"
+	"cinaroom-backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )

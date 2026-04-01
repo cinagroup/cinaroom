@@ -6,13 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Response is the unified API response envelope.
 type Response struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data,omitempty"`
 }
 
-// Success 成功响应
+// Success responds with HTTP 200 and a success envelope.
 func Success(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, Response{
 		Code:    0,
@@ -21,7 +22,7 @@ func Success(c *gin.Context, data interface{}) {
 	})
 }
 
-// SuccessWithMessage 带消息的成功响应
+// SuccessWithMessage responds with HTTP 200 and a custom message.
 func SuccessWithMessage(c *gin.Context, message string, data interface{}) {
 	c.JSON(http.StatusOK, Response{
 		Code:    0,
@@ -30,7 +31,7 @@ func SuccessWithMessage(c *gin.Context, message string, data interface{}) {
 	})
 }
 
-// Error 错误响应
+// Error responds with the given HTTP status code and error envelope.
 func Error(c *gin.Context, code int, message string, data interface{}) {
 	c.JSON(code, Response{
 		Code:    code,
@@ -39,40 +40,40 @@ func Error(c *gin.Context, code int, message string, data interface{}) {
 	})
 }
 
-// BadRequest 400 错误
+// BadRequest responds with 400.
 func BadRequest(c *gin.Context, message string) {
 	Error(c, http.StatusBadRequest, message, nil)
 }
 
-// Unauthorized 401 错误
+// Unauthorized responds with 401.
 func Unauthorized(c *gin.Context, message string) {
 	Error(c, http.StatusUnauthorized, message, nil)
 }
 
-// Forbidden 403 错误
+// Forbidden responds with 403.
 func Forbidden(c *gin.Context, message string) {
 	Error(c, http.StatusForbidden, message, nil)
 }
 
-// NotFound 404 错误
+// NotFound responds with 404.
 func NotFound(c *gin.Context, message string) {
 	Error(c, http.StatusNotFound, message, nil)
 }
 
-// InternalError 500 错误
+// InternalError responds with 500.
 func InternalError(c *gin.Context, message string) {
 	Error(c, http.StatusInternalServerError, message, nil)
 }
 
-// PageData 分页数据
+// PageData is a generic paginated payload.
 type PageData struct {
-	List      interface{} `json:"list"`
-	Total     int64       `json:"total"`
-	Page      int         `json:"page"`
-	PageSize  int         `json:"page_size"`
+	List     interface{} `json:"list"`
+	Total    int64       `json:"total"`
+	Page     int         `json:"page"`
+	PageSize int         `json:"page_size"`
 }
 
-// SuccessWithPage 分页成功响应
+// SuccessWithPage responds with a paginated success envelope.
 func SuccessWithPage(c *gin.Context, list interface{}, total int64, page, pageSize int) {
 	Success(c, PageData{
 		List:     list,

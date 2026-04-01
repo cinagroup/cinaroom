@@ -1,22 +1,36 @@
 package middleware
 
 import (
-	"multipass-backend/internal/config"
+	"net/http"
+	"strings"
+
+	"cinaroom-backend/internal/config"
 
 	"github.com/gin-gonic/gin"
 )
 
-// CORS 跨域中间件
+// CORS returns a cross-origin resource sharing middleware.
 func CORS(cfg *config.CORSConfig) gin.HandlerFunc {
+	allowedOrigins := cfg.AllowOrigins
+	allowedMethods := strings.Join(cfg.AllowMethods, ", ")
+	allowedHeaders := strings.Join(cfg.AllowHeaders, ", ")
+
 	return func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", cfg.AllowOrigins[0])
-		c.Header("Access-Control-Allow-Methods", joinStrings(cfg.AllowMethods))
-		c.Header("Access-Control-Allow-Headers", joinStrings(cfg.AllowHeaders))
+		origin := c.Request.Header.Get("Origin")
+
+		if isOriginAllowed(origin, allowedOrigins) {
+			c.Header("Access-Control-Allow-Origin", origin)
+		} else if len(allowedOrigins) > 0 {
+			c.Header("Access-Control-Allow-Origin", allowedOrigins[0])
+		}
+
+		c.Header("Access-Control-Allow-Methods", allowedMethods)
+		c.Header("Access-Control-Allow-Headers", allowedHeaders)
 		c.Header("Access-Control-Expose-Headers", "Content-Length, Authorization")
 		c.Header("Access-Control-Allow-Credentials", "true")
+		c.Header("Access-Control-Max-Age", "86400")
 
-		// 处理预检请求
-		if c.Request.Method == "OPTIONS" {
+		if c.Request.Method == http.MethodOptions {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
@@ -25,13 +39,15 @@ func CORS(cfg *config.CORSConfig) gin.HandlerFunc {
 	}
 }
 
-func joinStrings(strs []string) string {
-	result := ""
-	for i, s := range strs {
-		if i > 0 {
-			result += ", "
-		}
-		result += s
+// isOriginAllowed checks if the request origin is in the allowed list.
+func isOriginAllowed(origin string, allowed []string) bool {
+	if origin == "" {
+		return false
 	}
-	return result
+	for _, o := range allowed {
+		if o == "*" || strings.EqualFold(o, origin) {
+			return true
+		}
+	}
+	return false
 }

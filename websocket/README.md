@@ -1,4 +1,4 @@
-# MultiPass WebSocket 与云端中转架构
+# CinaRoom WebSocket 与云端中转架构
 
 实时 WebSocket 终端和云端安全中转服务，支持 WebShell 终端连接、用户端注册、请求转发等功能。
 
@@ -139,7 +139,7 @@
 ### 2. 克隆项目
 
 ```bash
-cd /root/.openclaw/workspace/multipass-websocket
+cd /root/.openclaw/workspace/cinaroom/websocket
 ```
 
 ### 3. 配置环境变量
@@ -305,7 +305,7 @@ docker-compose up -d
 
 1. 创建 Tunnel:
 ```bash
-cloudflared tunnel create multipass
+cloudflared tunnel create cinaroom
 ```
 
 2. 配置 DNS CNAME:
@@ -321,7 +321,7 @@ relay.example.com -> tunnel-id.cfargotunnel.com
 ### 项目结构
 
 ```
-multipass-websocket/
+cinaroom/websocket/
 ├── backend/
 │   ├── main.go              # 入口文件
 │   ├── terminal.go          # 终端服务实现
@@ -364,10 +364,10 @@ go test -bench=. -benchmem
 cd deploy
 
 # 构建终端服务镜像
-docker build -f Dockerfile.terminal -t multipass/terminal .
+docker build -f Dockerfile.terminal -t cinaroom/terminal .
 
 # 构建中转服务镜像
-docker build -f Dockerfile.relay -t multipass/relay .
+docker build -f Dockerfile.relay -t cinaroom/relay .
 ```
 
 ## 📊 性能指标

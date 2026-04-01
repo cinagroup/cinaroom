@@ -36,7 +36,7 @@
          │                    │                    │
          ↓                    ↓                    ↓
 ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│  PostgreSQL 15  │ │     Redis       │ │   Multipass     │
+│  PostgreSQL 15  │ │     Redis       │ │   CinaRoom VM   │
 │  (主从复制)     │ │   (会话存储)    │ │   (虚拟机)      │
 └─────────────────┘ └─────────────────┘ └─────────────────┘
 ```
@@ -87,8 +87,8 @@ open http://localhost:3000
 ```bash
 cd backend
 go mod tidy
-go build -o bin/multipass-backend cmd/server/main.go
-./bin/multipass-backend
+go build -o bin/cinaroom-backend cmd/server/main.go
+./bin/cinaroom-backend
 ```
 
 ### 前端单独构建

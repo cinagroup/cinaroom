@@ -1,24 +1,26 @@
 package middleware
 
 import (
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
-	"multipass-backend/internal/config"
-	"multipass-backend/pkg/response"
+	"cinaroom-backend/internal/config"
+	"cinaroom-backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Claims represents the JWT payload.
 type Claims struct {
 	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
 
-// JWTAuth JWT 认证中间件
+// JWTAuth returns a middleware that validates Bearer tokens.
 func JWTAuth(cfg *config.JWTConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -30,7 +32,7 @@ func JWTAuth(cfg *config.JWTConfig) gin.HandlerFunc {
 
 		parts := strings.SplitN(authHeader, " ", 2)
 		if !(len(parts) == 2 && parts[0] == "Bearer") {
-			response.Error(c, http.StatusUnauthorized, "认证格式错误", nil)
+			response.Error(c, http.StatusUnauthorized, "认证格式错误，应为 Bearer <token>", nil)
 			c.Abort()
 			return
 		}
@@ -43,19 +45,19 @@ func JWTAuth(cfg *config.JWTConfig) gin.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
+			slog.Warn("JWT validation failed", "error", err)
 			response.Error(c, http.StatusUnauthorized, "认证失败或 Token 已过期", nil)
 			c.Abort()
 			return
 		}
 
-		// 将用户信息存入上下文
 		c.Set("userID", claims.UserID)
 		c.Set("username", claims.Username)
 		c.Next()
 	}
 }
 
-// GenerateToken 生成 JWT Token
+// GenerateToken creates a signed JWT for the given user.
 func GenerateToken(cfg *config.JWTConfig, userID uint, username string) (string, error) {
 	claims := Claims{
 		UserID:   userID,
@@ -63,6 +65,7 @@ func GenerateToken(cfg *config.JWTConfig, userID uint, username string) (string,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(cfg.ExpireTime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "cinaroom-backend",
 		},
 	}
 

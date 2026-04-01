@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"multipass-backend/internal/config"
-	"multipass-backend/internal/model"
-	"multipass-backend/internal/repository"
-	"multipass-backend/pkg/response"
+	"cinaroom-backend/internal/config"
+	"cinaroom-backend/internal/model"
+	"cinaroom-backend/internal/repository"
+	"cinaroom-backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
@@ -146,7 +146,7 @@ func (h *VMHandler) CreateVM(c *gin.Context) {
 		return
 	}
 
-	// TODO: 这里应该调用 Multipass 命令实际创建虚拟机
+	// TODO: 这里应该调用 multipass CLI 实际创建虚拟机
 	// 例如：multipass launch --name <name> --cpus <cpu> --memory <memory>G --disk <disk>G <image>
 
 	// 记录日志

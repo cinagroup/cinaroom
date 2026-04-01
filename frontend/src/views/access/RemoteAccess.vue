@@ -21,7 +21,7 @@
             
             <div class="status-item" v-if="accessEnabled">
               <span class="label">访问地址</span>
-              <el-input value="https://multipass.example.com" readonly>
+              <el-input value="https://cinaroom.run" readonly>
                 <template #append>
                   <el-button @click="handleCopy">
                     <el-icon><CopyDocument /></el-icon>
@@ -126,7 +126,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import Header from '@/components/Header.vue'
 
 const accessEnabled = ref(true)
-const accessUrl = ref('https://multipass.example.com')
+const accessUrl = ref('https://cinaroom.run')
 const showAddIpDialog = ref(false)
 const logDateRange = ref([])
 

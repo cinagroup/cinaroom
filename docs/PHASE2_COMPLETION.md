@@ -245,7 +245,7 @@ CINATOKEN_CLIENT_SECRET=sk_xxx
 
 ```bash
 # 在 PostgreSQL 主库执行
-psql -h 43.156.66.122 -U multipass -d cinatoken
+psql -h 43.156.66.122 -U cinaroom -d cinatoken
 
 # 执行迁移 SQL
 ALTER TABLE users ADD COLUMN cinatoken_id INTEGER UNIQUE;

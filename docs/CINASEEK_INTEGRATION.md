@@ -65,40 +65,40 @@ const loginWithCinaToken = () => {
 **创建独立 schema：**
 ```sql
 -- 在 PostgreSQL 主库（服务器 A）执行
-CREATE SCHEMA IF NOT EXISTS multipass;
+CREATE SCHEMA IF NOT EXISTS cinaroom;
 
--- 迁移数据表到 multipass schema
+-- 迁移数据表到 cinaroom schema
 -- 移除 users 表（使用 CinaToken 用户体系）
 -- 保留 vms, vm_snapshots, mounts, openclaw_configs 等业务表
 ```
 
 **调整后的表结构：**
 ```
-multipass.vms
-multipass.vm_snapshots
-multipass.vm_logs
-multipass.vm_metrics
-multipass.mounts
-multipass.openclaw_configs
-multipass.openclaw_logs
-multipass.remote_access
-multipass.remote_logs
-multipass.ip_whitelists
-multipass.system_settings
+cinaroom.vms
+cinaroom.vm_snapshots
+cinaroom.vm_logs
+cinaroom.vm_metrics
+cinaroom.mounts
+cinaroom.openclaw_configs
+cinaroom.openclaw_logs
+cinaroom.remote_access
+cinaroom.remote_logs
+cinaroom.ip_whitelists
+cinaroom.system_settings
 ```
 
 #### 4. API 路径调整
 
 **原路径：** `/api/v1/auth/login`
-**新路径：** `/api/multipass/v1/...`（移除认证相关接口）
+**新路径：** `/api/cinaroom/v1/...`（移除认证相关接口）
 
 **保留接口：**
-- `GET /api/multipass/v1/vm/list` - 虚拟机列表
-- `POST /api/multipass/v1/vm/create` - 创建虚拟机
-- `POST /api/multipass/v1/vm/operate` - 虚拟机操作
-- `GET /api/multipass/v1/mount/list` - 挂载列表
-- `POST /api/multipass/v1/openclaw/deploy` - OpenClaw 部署
-- `GET /api/multipass/v1/remote/status` - 远程访问状态
+- `GET /api/cinaroom/v1/vm/list` - 虚拟机列表
+- `POST /api/cinaroom/v1/vm/create` - 创建虚拟机
+- `POST /api/cinaroom/v1/vm/operate` - 虚拟机操作
+- `GET /api/cinaroom/v1/mount/list` - 挂载列表
+- `POST /api/cinaroom/v1/openclaw/deploy` - OpenClaw 部署
+- `GET /api/cinaroom/v1/remote/status` - 远程访问状态
 - ...（共 40 个业务接口）
 
 **移除接口：**
@@ -144,9 +144,9 @@ func AuthMiddleware() gin.HandlerFunc {
 
 ```go
 // internal/database/postgres.go
-dsn := "host=43.156.66.122 port=5432 user=multipass password=xxx dbname=cinatoken sslmode=require"
-// 使用 multipass schema
-db.Exec("SET search_path TO multipass, public")
+dsn := "host=43.156.66.122 port=5432 user=cinaroom password=xxx dbname=cinatoken sslmode=require"
+// 使用 cinaroom schema
+db.Exec("SET search_path TO cinaroom, public")
 ```
 
 ### 主从复制
@@ -163,9 +163,9 @@ db.Exec("SET search_path TO multipass, public")
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: multipass
+  name: cinaroom
   labels:
-    app: multipass
+    app: cinaroom
     team: cinagroup
 ```
 
@@ -176,8 +176,8 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: multipass-backend
-  namespace: multipass
+  name: cinaroom-backend
+  namespace: cinaroom
 spec:
   replicas: 2
   template:

@@ -2,43 +2,56 @@ package repository
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
+	"time"
 
-	"multipass-backend/internal/config"
-	"multipass-backend/internal/model"
+	"cinaroom-backend/internal/config"
+	"cinaroom-backend/internal/model"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 var DB *gorm.DB
 
-// InitDB 初始化数据库连接
+// InitDB initialises the database connection with connection pooling and runs migrations.
 func InitDB(cfg *config.DatabaseConfig) error {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
-		cfg.Host, cfg.User, cfg.Password, cfg.DBName, cfg.Port, cfg.SSLMode)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s search_path=%s",
+		cfg.Host, cfg.User, cfg.Password, cfg.DBName, cfg.Port, cfg.SSLMode, cfg.Schema)
 
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: gormlogger.Default.LogMode(gormlogger.Info),
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to connect database: %w", err)
 	}
 
-	// 自动迁移模型
-	err = autoMigrate()
+	// Configure connection pool
+	sqlDB, err := DB.DB()
 	if err != nil {
+		return fmt.Errorf("failed to get underlying sql.DB: %w", err)
+	}
+	sqlDB.SetMaxIdleConns(cfg.MaxIdleConns)
+	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
+	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+
+	// Run auto-migration
+	if err := autoMigrate(); err != nil {
 		return fmt.Errorf("failed to migrate database: %w", err)
 	}
 
-	log.Println("Database connection established")
+	slog.Info("database connection established",
+		"host", cfg.Host,
+		"port", cfg.Port,
+		"database", cfg.DBName,
+		"schema", cfg.Schema,
+	)
 	return nil
 }
 
-// autoMigrate 自动创建表结构
+// autoMigrate creates or updates all table schemas.
 func autoMigrate() error {
 	return DB.AutoMigrate(
 		&model.User{},
@@ -57,7 +70,49 @@ func autoMigrate() error {
 	)
 }
 
-// GetDB 获取数据库实例
+// GetDB returns the global database instance.
 func GetDB() *gorm.DB {
 	return DB
+}
+
+// HealthCheck pings the database to verify connectivity.
+func HealthCheck() error {
+	if DB == nil {
+		return fmt.Errorf("database not initialised")
+	}
+	sqlDB, err := DB.DB()
+	if err != nil {
+		return fmt.Errorf("failed to get sql.DB: %w", err)
+	}
+	if err := sqlDB.Ping(); err != nil {
+		return fmt.Errorf("database ping failed: %w", err)
+	}
+	return nil
+}
+
+// CloseDB gracefully closes the database connection pool.
+func CloseDB() error {
+	if DB == nil {
+		return nil
+	}
+	sqlDB, err := DB.DB()
+	if err != nil {
+		return fmt.Errorf("failed to get sql.DB for closing: %w", err)
+	}
+
+	// Give pending queries up to 5 seconds to finish.
+	maxWait := time.After(5 * time.Second)
+	done := make(chan error, 1)
+	go func() {
+		done <- sqlDB.Close()
+	}()
+
+	select {
+	case err := <-done:
+		slog.Info("database connection closed")
+		return err
+	case <-maxWait:
+		slog.Warn("database close timed out, forcing shutdown")
+		return sqlDB.Close()
+	}
 }

@@ -18,7 +18,7 @@ kubectl cluster-info || {
 }
 
 # 创建 Namespace
-echo "📦 创建 multipass namespace..."
+echo "📦 创建 cinaroom namespace..."
 kubectl apply -f deploy/k8s/namespace.yaml
 
 # 创建 ConfigMap
@@ -42,7 +42,7 @@ kubectl apply -f deploy/k8s/ingress.yaml
 # 查看状态
 echo ""
 echo "📊 部署状态："
-kubectl get all -n multipass
+kubectl get all -n cinaroom
 
 echo ""
 echo "✅ 部署完成！"
@@ -54,4 +54,4 @@ echo "3. 申请 CinaToken OAuth 客户端凭证"
 echo "4. 更新 Secret 中的密码和密钥"
 echo "5. 重新部署以应用更新"
 echo ""
-echo "查看日志：kubectl logs -n multipass -l app=cinaroom -f"
+echo "查看日志：kubectl logs -n cinaroom -l app=cinaroom -f"

@@ -4,10 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"multipass-backend/internal/config"
-	"multipass-backend/internal/model"
-	"multipass-backend/internal/repository"
-	"multipass-backend/pkg/response"
+	"cinaroom-backend/internal/config"
+	"cinaroom-backend/internal/model"
+	"cinaroom-backend/internal/repository"
+	"cinaroom-backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )

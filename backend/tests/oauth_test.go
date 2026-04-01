@@ -7,9 +7,9 @@ import (
 	"os"
 	"testing"
 
-	"multipass-backend/internal/config"
-	"multipass-backend/internal/handler"
-	"multipass-backend/internal/oauth"
+	"cinaroom-backend/internal/config"
+	"cinaroom-backend/internal/handler"
+	"cinaroom-backend/internal/oauth"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"

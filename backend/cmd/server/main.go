@@ -11,10 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"multipass-backend/internal/config"
-	"multipass-backend/internal/handler"
-	"multipass-backend/internal/middleware"
-	"multipass-backend/internal/repository"
+	"cinaroom-backend/internal/config"
+	"cinaroom-backend/internal/handler"
+	"cinaroom-backend/internal/middleware"
+	"cinaroom-backend/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,34 +1,47 @@
 package handler
 
 import (
+	"log/slog"
 	"net/http"
 	"regexp"
-	"strings"
+	"time"
 
-	"multipass-backend/internal/config"
-	"multipass-backend/internal/middleware"
-	"multipass-backend/internal/model"
-	"multipass-backend/internal/repository"
-	"multipass-backend/pkg/response"
+	"cinaroom-backend/internal/config"
+	"cinaroom-backend/internal/middleware"
+	"cinaroom-backend/internal/model"
+	"cinaroom-backend/internal/repository"
+	"cinaroom-backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
+// AuthHandler handles authentication-related requests.
 type AuthHandler struct {
 	cfg *config.Config
 }
 
+// NewAuthHandler creates a new AuthHandler.
 func NewAuthHandler(cfg *config.Config) *AuthHandler {
 	return &AuthHandler{cfg: cfg}
 }
 
-// Register 用户注册
+// Register godoc
+// @Summary      用户注册
+// @Description  注册新用户账号
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      object  true  "注册信息"  example({"username":"admin","email":"admin@example.com","password":"Admin123","confirm_password":"Admin123"})
+// @Success      200   {object}  response.Response
+// @Failure      400   {object}  response.Response
+// @Failure      500   {object}  response.Response
+// @Router       /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req struct {
-		Username       string `json:"username" binding:"required,min=3,max=20"`
-		Email          string `json:"email" binding:"required,email"`
-		Password       string `json:"password" binding:"required,min=8,max=20"`
+		Username        string `json:"username" binding:"required,min=3,max=20"`
+		Email           string `json:"email" binding:"required,email"`
+		Password        string `json:"password" binding:"required,min=8,max=20"`
 		ConfirmPassword string `json:"confirm_password" binding:"required,eqfield=Password"`
 	}
 
@@ -37,7 +50,6 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	// 验证密码强度
 	if !validatePassword(req.Password) {
 		response.BadRequest(c, "密码必须包含大小写字母和数字")
 		return
@@ -45,38 +57,40 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	db := repository.GetDB()
 
-	// 检查用户名是否已存在
 	var existingUser model.User
 	if err := db.Where("username = ? OR email = ?", req.Username, req.Email).First(&existingUser).Error; err == nil {
 		response.BadRequest(c, "用户名或邮箱已被注册")
 		return
 	}
 
-	// 加密密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
+		slog.Error("password hashing failed", "error", err)
 		response.InternalError(c, "密码加密失败")
 		return
 	}
 
-	// 创建用户
 	user := model.User{
 		Username: req.Username,
 		Email:    req.Email,
 		Password: string(hashedPassword),
+		Active:   true,
 	}
 
 	if err := db.Create(&user).Error; err != nil {
-		response.InternalError(c, "注册失败："+err.Error())
+		slog.Error("user creation failed", "error", err, "username", req.Username)
+		response.InternalError(c, "注册失败")
 		return
 	}
 
-	// 生成 Token
 	token, err := middleware.GenerateToken(&h.cfg.JWT, user.ID, user.Username)
 	if err != nil {
+		slog.Error("token generation failed", "error", err)
 		response.InternalError(c, "Token 生成失败")
 		return
 	}
+
+	slog.Info("user registered", "user_id", user.ID, "username", user.Username)
 
 	response.SuccessWithMessage(c, "注册成功", gin.H{
 		"token": token,
@@ -88,7 +102,17 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	})
 }
 
-// Login 用户登录
+// Login godoc
+// @Summary      用户登录
+// @Description  使用用户名/邮箱和密码登录
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      object  true  "登录信息"
+// @Success      200   {object}  response.Response
+// @Failure      400   {object}  response.Response
+// @Failure      401   {object}  response.Response
+// @Router       /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req struct {
 		Username string `json:"username" binding:"required"`
@@ -103,40 +127,37 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	db := repository.GetDB()
 
-	// 查找用户
 	var user model.User
-	query := db.Where("username = ? OR email = ?", req.Username, req.Username)
-	if err := query.First(&user).Error; err != nil {
+	if err := db.Where("username = ? OR email = ?", req.Username, req.Username).First(&user).Error; err != nil {
 		response.Unauthorized(c, "用户名或密码错误")
 		return
 	}
 
-	// 验证密码
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		response.Unauthorized(c, "用户名或密码错误")
 		return
 	}
 
-	// 更新登录时间
-	now := user.CreatedAt // 使用 CreatedAt 避免 import time
+	now := time.Now()
 	user.LastLoginAt = &now
 	db.Save(&user)
 
-	// 记录登录日志
-	clientIP := c.ClientIP()
 	loginLog := model.LoginLog{
-		UserID: user.ID,
-		IP:     clientIP,
-		Device: c.Request.UserAgent(),
+		UserID:    user.ID,
+		LoginTime: now,
+		IP:        c.ClientIP(),
+		Device:    c.Request.UserAgent(),
 	}
 	db.Create(&loginLog)
 
-	// 生成 Token
 	token, err := middleware.GenerateToken(&h.cfg.JWT, user.ID, user.Username)
 	if err != nil {
+		slog.Error("token generation failed", "error", err)
 		response.InternalError(c, "Token 生成失败")
 		return
 	}
+
+	slog.Info("user logged in", "user_id", user.ID, "ip", c.ClientIP())
 
 	response.Success(c, gin.H{
 		"token": token,
@@ -150,20 +171,32 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
-// Logout 用户登出
+// Logout godoc
+// @Summary      用户登出
+// @Description  登出当前用户（客户端删除 token）
+// @Tags         auth
+// @Security     BearerAuth
+// @Success      200  {object}  response.Response
+// @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// 在实际应用中，这里可以将 Token 加入黑名单
-	// 由于 JWT 是无状态的，我们只需要让客户端删除 Token 即可
-
 	response.SuccessWithMessage(c, "登出成功", nil)
 }
 
-// ResetPassword 重置密码
+// ResetPassword godoc
+// @Summary      重置密码
+// @Description  通过邮箱和验证码重置密码
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        body  body      object  true  "重置密码信息"
+// @Success      200   {object}  response.Response
+// @Failure      400   {object}  response.Response
+// @Router       /auth/reset-pwd [post]
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req struct {
 		Email       string `json:"email" binding:"required,email"`
 		NewPassword string `json:"new_password" binding:"required,min=8,max=20"`
-		Code        string `json:"code" binding:"required"` // 验证码（实际应用中需要验证）
+		Code        string `json:"code" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -171,7 +204,6 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 		return
 	}
 
-	// 验证密码强度
 	if !validatePassword(req.NewPassword) {
 		response.BadRequest(c, "密码必须包含大小写字母和数字")
 		return
@@ -179,48 +211,53 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 
 	db := repository.GetDB()
 
-	// 查找用户
 	var user model.User
 	if err := db.Where("email = ?", req.Email).First(&user).Error; err != nil {
 		response.BadRequest(c, "邮箱未注册")
 		return
 	}
 
-	// TODO: 这里应该验证验证码（通过邮件或短信发送的）
-	// 为简化实现，暂时跳过验证码验证
+	// TODO: verify verification code (Phase 2 – CinaToken email verification)
 
-	// 加密新密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
+		slog.Error("password hashing failed", "error", err)
 		response.InternalError(c, "密码加密失败")
 		return
 	}
 
-	// 更新密码
 	user.Password = string(hashedPassword)
 	if err := db.Save(&user).Error; err != nil {
+		slog.Error("password update failed", "error", err, "user_id", user.ID)
 		response.InternalError(c, "密码更新失败")
 		return
 	}
 
+	slog.Info("password reset", "user_id", user.ID)
 	response.SuccessWithMessage(c, "密码重置成功", nil)
 }
 
-// validatePassword 验证密码强度
+// validatePassword checks password strength (upper + lower + digit).
 func validatePassword(password string) bool {
-	// 至少 8 个字符
 	if len(password) < 8 {
 		return false
 	}
-
 	hasUpper := regexp.MustCompile(`[A-Z]`).MatchString
 	hasLower := regexp.MustCompile(`[a-z]`).MatchString
 	hasNumber := regexp.MustCompile(`[0-9]`).MatchString
-
 	return hasUpper(password) && hasLower(password) && hasNumber(password)
 }
 
-// GetUserInfo 获取当前用户信息
+// GetUserInfo godoc
+// @Summary      获取用户信息
+// @Description  获取当前登录用户的详细信息
+// @Tags         auth
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200  {object}  response.Response
+// @Failure      401  {object}  response.Response
+// @Failure      404  {object}  response.Response
+// @Router       /auth/user-info [get]
 func (h *AuthHandler) GetUserInfo(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -236,19 +273,29 @@ func (h *AuthHandler) GetUserInfo(c *gin.Context) {
 	}
 
 	response.Success(c, gin.H{
-		"id":            user.ID,
-		"username":      user.Username,
-		"email":         user.Email,
-		"nickname":      user.Nickname,
-		"phone":         user.Phone,
-		"avatar":        user.Avatar,
-		"created_at":    user.CreatedAt,
-		"last_login_at": user.LastLoginAt,
+		"id":                 user.ID,
+		"username":           user.Username,
+		"email":              user.Email,
+		"nickname":           user.Nickname,
+		"phone":              user.Phone,
+		"avatar":             user.Avatar,
+		"created_at":         user.CreatedAt,
+		"last_login_at":      user.LastLoginAt,
 		"two_factor_enabled": user.TwoFactorEnabled,
 	})
 }
 
-// UpdateUserInfo 更新用户信息
+// UpdateUserInfo godoc
+// @Summary      更新用户信息
+// @Description  更新当前用户的昵称、邮箱、手机号等
+// @Tags         auth
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        body  body  object  true  "用户信息"
+// @Success      200  {object}  response.Response
+// @Failure      400  {object}  response.Response
+// @Router       /auth/user-info [put]
 func (h *AuthHandler) UpdateUserInfo(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -264,7 +311,7 @@ func (h *AuthHandler) UpdateUserInfo(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.BadRequest(c, "参数错误")
+		response.BadRequest(c, "参数错误："+err.Error())
 		return
 	}
 
@@ -275,16 +322,14 @@ func (h *AuthHandler) UpdateUserInfo(c *gin.Context) {
 		return
 	}
 
-	// 如果修改邮箱，检查是否已被使用
 	if req.Email != "" && req.Email != user.Email {
-		var existingUser model.User
-		if err := db.Where("email = ? AND id != ?", req.Email, userID).First(&existingUser).Error; err == nil {
+		var existing model.User
+		if err := db.Where("email = ? AND id != ?", req.Email, userID).First(&existing).Error; err == nil {
 			response.BadRequest(c, "邮箱已被使用")
 			return
 		}
 		user.Email = req.Email
 	}
-
 	if req.Nickname != "" {
 		user.Nickname = req.Nickname
 	}
@@ -296,6 +341,7 @@ func (h *AuthHandler) UpdateUserInfo(c *gin.Context) {
 	}
 
 	if err := db.Save(&user).Error; err != nil {
+		slog.Error("user update failed", "error", err, "user_id", userID)
 		response.InternalError(c, "更新失败")
 		return
 	}
@@ -310,7 +356,17 @@ func (h *AuthHandler) UpdateUserInfo(c *gin.Context) {
 	})
 }
 
-// UpdatePassword 修改密码
+// UpdatePassword godoc
+// @Summary      修改密码
+// @Description  修改当前用户密码
+// @Tags         auth
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        body  body  object  true  "密码信息"
+// @Success      200  {object}  response.Response
+// @Failure      400  {object}  response.Response
+// @Router       /auth/user-pwd [put]
 func (h *AuthHandler) UpdatePassword(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -328,7 +384,6 @@ func (h *AuthHandler) UpdatePassword(c *gin.Context) {
 		return
 	}
 
-	// 验证密码强度
 	if !validatePassword(req.NewPassword) {
 		response.BadRequest(c, "密码必须包含大小写字母和数字")
 		return
@@ -341,21 +396,21 @@ func (h *AuthHandler) UpdatePassword(c *gin.Context) {
 		return
 	}
 
-	// 验证当前密码
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.CurrentPassword)); err != nil {
 		response.BadRequest(c, "当前密码错误")
 		return
 	}
 
-	// 加密新密码
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
 	if err != nil {
+		slog.Error("password hashing failed", "error", err)
 		response.InternalError(c, "密码加密失败")
 		return
 	}
 
 	user.Password = string(hashedPassword)
 	if err := db.Save(&user).Error; err != nil {
+		slog.Error("password save failed", "error", err, "user_id", userID)
 		response.InternalError(c, "密码更新失败")
 		return
 	}
@@ -363,7 +418,14 @@ func (h *AuthHandler) UpdatePassword(c *gin.Context) {
 	response.SuccessWithMessage(c, "密码修改成功", nil)
 }
 
-// GetLoginLogs 获取登录日志
+// GetLoginLogs godoc
+// @Summary      获取登录日志
+// @Description  获取当前用户的登录日志
+// @Tags         auth
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200  {object}  response.Response
+// @Router       /auth/login-logs [get]
 func (h *AuthHandler) GetLoginLogs(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -374,6 +436,7 @@ func (h *AuthHandler) GetLoginLogs(c *gin.Context) {
 	db := repository.GetDB()
 	var logs []model.LoginLog
 	if err := db.Where("user_id = ?", userID).Order("login_time DESC").Limit(50).Find(&logs).Error; err != nil {
+		slog.Error("login logs query failed", "error", err, "user_id", userID)
 		response.InternalError(c, "查询失败")
 		return
 	}
@@ -381,7 +444,14 @@ func (h *AuthHandler) GetLoginLogs(c *gin.Context) {
 	response.Success(c, logs)
 }
 
-// GetSessions 获取活跃会话
+// GetSessions godoc
+// @Summary      获取活跃会话
+// @Description  获取当前用户的活跃会话列表
+// @Tags         auth
+// @Security     BearerAuth
+// @Produce      json
+// @Success      200  {object}  response.Response
+// @Router       /auth/sessions [get]
 func (h *AuthHandler) GetSessions(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -392,6 +462,7 @@ func (h *AuthHandler) GetSessions(c *gin.Context) {
 	db := repository.GetDB()
 	var sessions []model.Session
 	if err := db.Where("user_id = ? AND expired_at > ?", userID, db.NowFunc()).Find(&sessions).Error; err != nil {
+		slog.Error("sessions query failed", "error", err, "user_id", userID)
 		response.InternalError(c, "查询失败")
 		return
 	}
@@ -399,7 +470,17 @@ func (h *AuthHandler) GetSessions(c *gin.Context) {
 	response.Success(c, sessions)
 }
 
-// RevokeSession 撤销会话
+// RevokeSession godoc
+// @Summary      撤销会话
+// @Description  撤销指定的用户会话
+// @Tags         auth
+// @Security     BearerAuth
+// @Accept       json
+// @Produce      json
+// @Param        body  body  object  true  "会话信息"
+// @Success      200  {object}  response.Response
+// @Failure      404  {object}  response.Response
+// @Router       /auth/sessions/revoke [post]
 func (h *AuthHandler) RevokeSession(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {
@@ -417,8 +498,7 @@ func (h *AuthHandler) RevokeSession(c *gin.Context) {
 	}
 
 	db := repository.GetDB()
-	
-	// 更新会话过期时间为当前时间
+
 	result := db.Model(&model.Session{}).
 		Where("id = ? AND user_id = ?", req.SessionID, userID).
 		Update("expired_at", db.NowFunc())

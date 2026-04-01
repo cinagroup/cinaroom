@@ -1,34 +1,48 @@
 package middleware
 
 import (
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// Logger 日志中间件
+// Logger returns a structured logging middleware using slog.
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		startTime := time.Now()
+		start := time.Now()
+		path := c.Request.URL.Path
+		raw := c.Request.URL.RawQuery
 
-		// 处理请求
 		c.Next()
 
-		// 记录日志
-		latency := time.Since(startTime)
-		statusCode := c.Writer.Status()
+		latency := time.Since(start)
+		status := c.Writer.Status()
 		clientIP := c.ClientIP()
 		method := c.Request.Method
-		path := c.Request.URL.Path
+		userID, _ := c.Get("userID")
 
-		log.Printf("[%s] %s %s %d %v %s",
-			method,
-			path,
-			clientIP,
-			statusCode,
-			latency,
-			c.Errors.String(),
-		)
+		attrs := []any{
+			"status", status,
+			"method", method,
+			"path", path,
+			"query", raw,
+			"ip", clientIP,
+			"latency", latency.String(),
+			"user_id", userID,
+		}
+
+		if len(c.Errors) > 0 {
+			attrs = append(attrs, "errors", c.Errors.String())
+		}
+
+		switch {
+		case status >= 500:
+			slog.Error("request", attrs...)
+		case status >= 400:
+			slog.Warn("request", attrs...)
+		default:
+			slog.Info("request", attrs...)
+		}
 	}
 }

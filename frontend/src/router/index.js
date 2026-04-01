@@ -126,7 +126,7 @@ const router = createRouter({
 
 // 路由守卫
 router.beforeEach((to, from, next) => {
-  document.title = to.meta.title ? `${to.meta.title} - Multipass 远程管理平台` : 'Multipass 远程管理平台'
+  document.title = to.meta.title ? `${to.meta.title} - CinaRoom 云端开发工作室` : 'CinaRoom 云端开发工作室'
   
   const token = localStorage.getItem('token')
   

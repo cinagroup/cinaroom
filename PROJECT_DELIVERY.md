@@ -8,7 +8,7 @@
 
 ## 📦 交付清单
 
-### 1. 前端项目 (multipass-frontend → cinaroom/frontend)
+### 1. 前端项目 (cinaroom/frontend)
 **技术栈**: Vue 3.4 + Vite 5 + Element Plus 2.5 + Pinia + Vue Router
 
 **文件数**: 35 个  
@@ -28,7 +28,7 @@
 
 ---
 
-### 2. 后端 API (multipass-backend → cinaroom/backend)
+### 2. 后端 API (cinaroom/backend)
 **技术栈**: Go 1.23+ + Gin + PostgreSQL 15 + Redis
 
 **文件数**: 15 个 Go 文件  
@@ -54,7 +54,7 @@
 
 ---
 
-### 3. WebSocket 服务 (multipass-websocket → cinaroom/websocket)
+### 3. WebSocket 服务 (cinaroom/websocket)
 **技术栈**: Go + WebSocket + PTY + Cloudflare Tunnel
 
 **文件数**: 21 个  
@@ -80,7 +80,7 @@
 **位置**: `deploy/k8s/`
 
 **配置文件**:
-- `namespace.yaml` - multipass namespace
+- `namespace.yaml` - cinaroom namespace
 - `configmap.yaml` - 环境变量配置
 - `secret.yaml` - 敏感信息（密码/密钥）
 - `deployment-backend.yaml` - 后端部署 (2 副本)
@@ -115,8 +115,8 @@
 | 层级 | 复用内容 | 配置 |
 |------|----------|------|
 | **认证** | CinaToken OAuth | 9 Provider, 39+ LLM 渠道 |
-| **数据库** | PostgreSQL 主从 | Schema: `multipass` |
-| **部署** | Kubernetes 集群 | Namespace: `multipass` |
+| **数据库** | PostgreSQL 主从 | Schema: `cinaroom` |
+| **部署** | Kubernetes 集群 | Namespace: `cinaroom` |
 | **监控** | Uptime Kuma | 共享监控面板 |
 | **SSL** | Cloudflare Full (Strict) | 15 年 Origin CA |
 
@@ -164,7 +164,7 @@
 - [ ] 移除后端独立认证模块
 - [ ] 实现 CinaToken OAuth 客户端
 - [ ] 调整前端登录页面（OAuth 跳转）
-- [ ] 数据库 schema 迁移（`multipass`）
+- [ ] 数据库 schema 迁移（`cinaroom`）
 
 ### Phase 3 - K8s 部署（截止：2026-04-14）
 - [ ] 注册域名 `cinaroom.run`
@@ -200,8 +200,8 @@ cd cinaroom
 # 后端
 cd backend
 go mod tidy
-go build -o bin/multipass-backend cmd/server/main.go
-./bin/multipass-backend
+go build -o bin/cinaroom-backend cmd/server/main.go
+./bin/cinaroom-backend
 
 # 前端
 cd frontend
@@ -224,7 +224,7 @@ chmod +x scripts/deploy-k8s.sh
 ./scripts/deploy-k8s.sh
 
 # 查看状态
-kubectl get all -n multipass
+kubectl get all -n cinaroom
 ```
 
 ---

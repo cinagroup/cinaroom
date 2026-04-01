@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cinaroom-backend
-  namespace: multipass
+  namespace: cinaroom
   labels:
     app: cinaroom
     component: backend
@@ -22,7 +22,7 @@ spec:
       - name: backend
         image: cinagroup/cinaroom:latest
         imagePullPolicy: Always
-        command: ["/multipass-backend"]
+        command: ["/cinaroom-backend"]
         workingDir: "/app"
         ports:
         - containerPort: 8080

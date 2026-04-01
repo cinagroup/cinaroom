@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: cinaroom-websocket
-  namespace: multipass
+  namespace: cinaroom
   labels:
     app: cinaroom
     component: websocket
@@ -22,7 +22,7 @@ spec:
       - name: websocket
         image: cinagroup/cinaroom-ws:latest
         imagePullPolicy: Always
-        command: ["/multipass-ws"]
+        command: ["/cinaroom-ws"]
         workingDir: "/app"
         ports:
         - containerPort: 8081
