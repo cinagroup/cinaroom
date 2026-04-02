@@ -1,9 +1,14 @@
-// 主题色彩
-$primary-color: #409EFF;
-$success-color: #67C23A;
-$warning-color: #E6A23C;
-$danger-color: #F56C6C;
-$info-color: #909399;
+// ===== CinaSeek Design System Variables =====
+// 品牌色
+$brand-color: #4A90D9;
+$brand-color-hover: #3A7BD5;
+$brand-color-active: #2E6BC4;
+
+// 功能色
+$success-color: #52C41A;
+$warning-color: #FAAD14;
+$danger-color: #F5222D;
+$info-color: #1890FF;
 
 // 布局尺寸
 $header-height: 60px;
@@ -12,11 +17,93 @@ $sidebar-collapsed-width: 64px;
 $content-margin: 20px;
 
 // 边框圆角
-$border-radius: 4px;
+$border-radius: 8px;
+$border-radius-sm: 4px;
+$border-radius-lg: 12px;
 
 // 字体
-$font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+$font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
 
 // 响应式断点
 $breakpoint-mobile: 768px;
 $breakpoint-tablet: 1024px;
+
+// ===== CSS Custom Properties =====
+:root,
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f7fa;
+  --bg-tertiary: #e8ecf1;
+  --bg-sidebar: #1b2a4a;
+  --bg-sidebar-hover: #253a5e;
+  --bg-sidebar-active: rgba(74, 144, 217, 0.15);
+  --bg-header: rgba(255, 255, 255, 0.85);
+
+  --text-primary: #1a1a2e;
+  --text-secondary: #606266;
+  --text-tertiary: #909399;
+  --text-sidebar: #b0bec5;
+  --text-sidebar-active: #ffffff;
+  --text-sidebar-group: rgba(255, 255, 255, 0.45);
+
+  --border-color: #e4e7ed;
+  --border-color-light: #ebeef5;
+
+  --accent-color: #4A90D9;
+  --accent-color-hover: #3A7BD5;
+  --accent-color-light: rgba(74, 144, 217, 0.1);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  --card-bg: #ffffff;
+  --card-radius: 8px;
+  --card-padding: 20px;
+  --card-border: 1px solid var(--border-color-light);
+  --card-shadow: var(--shadow-sm);
+
+  --scrollbar-thumb: #c0c4cc;
+  --scrollbar-track: transparent;
+
+  --el-bg-overlay: #ffffff;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #141414;
+  --bg-secondary: #1e1e1e;
+  --bg-tertiary: #2a2a2a;
+  --bg-sidebar: #0d1117;
+  --bg-sidebar-hover: #161b22;
+  --bg-sidebar-active: rgba(74, 144, 217, 0.2);
+  --bg-header: rgba(20, 20, 20, 0.85);
+
+  --text-primary: #e5eaf3;
+  --text-secondary: #a3a6ad;
+  --text-tertiary: #6c6e72;
+  --text-sidebar: #8b949e;
+  --text-sidebar-active: #f0f6fc;
+  --text-sidebar-group: rgba(139, 148, 158, 0.5);
+
+  --border-color: #363637;
+  --border-color-light: #2c2c2d;
+
+  --accent-color: #4A90D9;
+  --accent-color-hover: #6AADE0;
+  --accent-color-light: rgba(74, 144, 217, 0.15);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  --card-bg: #1e1e1e;
+  --card-radius: 8px;
+  --card-padding: 20px;
+  --card-border: 1px solid var(--border-color-light);
+  --card-shadow: var(--shadow-sm);
+
+  --scrollbar-thumb: #4a4a4a;
+  --scrollbar-track: transparent;
+
+  --el-bg-overlay: #1e1e1e;
+}

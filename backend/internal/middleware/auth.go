@@ -17,6 +17,7 @@ import (
 type Claims struct {
 	UserID   uint   `json:"user_id"`
 	Username string `json:"username"`
+	Role     int    `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -56,11 +57,12 @@ func JWTAuth(cfg *config.JWTConfig) gin.HandlerFunc {
 
 		c.Set("userID", claims.UserID)
 		c.Set("username", claims.Username)
+		c.Set("user_role", claims.Role)
 
 		// Proactive refresh: if the token is within RefreshWindow of expiry,
 		// generate a fresh token and return it in the response header.
 		if shouldRefresh(claims) {
-			newToken, refreshErr := GenerateToken(cfg, claims.UserID, claims.Username)
+			newToken, refreshErr := GenerateToken(cfg, claims.UserID, claims.Username, claims.Role)
 			if refreshErr == nil {
 				c.Header("X-New-Token", newToken)
 				c.Header("X-Token-Refreshed", "true")
@@ -87,10 +89,11 @@ func shouldRefresh(claims *Claims) bool {
 }
 
 // GenerateToken creates a signed JWT for the given user.
-func GenerateToken(cfg *config.JWTConfig, userID uint, username string) (string, error) {
+func GenerateToken(cfg *config.JWTConfig, userID uint, username string, role int) (string, error) {
 	claims := Claims{
 		UserID:   userID,
 		Username: username,
+		Role:     role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(cfg.ExpireTime)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

@@ -21,6 +21,7 @@ type User struct {
 	UpdatedAt        time.Time  `gorm:"autoUpdateTime" json:"updated_at" form:"updated_at"`
 	LastLoginAt      *time.Time `json:"last_login_at" form:"last_login_at"`
 	TwoFactorEnabled bool       `gorm:"default:false" json:"two_factor_enabled" form:"two_factor_enabled"`
+	Role             int        `gorm:"default:0" json:"role" form:"role"` // 0=普通用户, 10=管理员, 100=root
 }
 
 // TableName specifies the table name for User.

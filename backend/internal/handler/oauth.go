@@ -97,12 +97,20 @@ func (h *OAuthHandler) OAuthCallback(c *gin.Context) {
 	db := repository.GetDB()
 	var user model.User
 
+	// 检查是否为第一个注册的用户（自动成为 root）
+	var userCount int64
+	db.Model(&model.User{}).Count(&userCount)
+
 	// 通过 GitHub ID 查找（provider + username 组合）
 	if err := db.Where("provider = ? AND username = ?", "github", userInfo.Username).First(&user).Error; err != nil {
 		// 尝试通过邮箱查找
 		if userInfo.Email != "" {
 			if err := db.Where("email = ?", userInfo.Email).First(&user).Error; err != nil {
 				// 创建新用户
+				newRole := 0
+				if userCount == 0 {
+					newRole = 100 // 第一个用户成为 root
+				}
 				user = model.User{
 					Username: userInfo.Username,
 					Email:    userInfo.Email,
@@ -110,6 +118,7 @@ func (h *OAuthHandler) OAuthCallback(c *gin.Context) {
 					Avatar:   userInfo.Avatar,
 					Provider: "github",
 					Active:   true,
+					Role:     newRole,
 				}
 				if err := db.Create(&user).Error; err != nil {
 					response.InternalError(c, "创建用户失败："+err.Error())
@@ -118,6 +127,10 @@ func (h *OAuthHandler) OAuthCallback(c *gin.Context) {
 			}
 		} else {
 			// 无邮箱，直接创建
+			newRole := 0
+			if userCount == 0 {
+				newRole = 100 // 第一个用户成为 root
+			}
 			user = model.User{
 				Username: userInfo.Username,
 				Email:    userInfo.Username + "@github",
@@ -125,6 +138,7 @@ func (h *OAuthHandler) OAuthCallback(c *gin.Context) {
 				Avatar:   userInfo.Avatar,
 				Provider: "github",
 				Active:   true,
+				Role:     newRole,
 			}
 			if err := db.Create(&user).Error; err != nil {
 				response.InternalError(c, "创建用户失败："+err.Error())
@@ -148,7 +162,7 @@ func (h *OAuthHandler) OAuthCallback(c *gin.Context) {
 	})
 
 	// 生成 CinaSeek JWT
-	token, err := middleware.GenerateToken(&h.cfg.JWT, user.ID, user.Username)
+	token, err := middleware.GenerateToken(&h.cfg.JWT, user.ID, user.Username, user.Role)
 	if err != nil {
 		response.InternalError(c, "Token 生成失败")
 		return
@@ -163,6 +177,7 @@ func (h *OAuthHandler) OAuthCallback(c *gin.Context) {
 			"nickname": user.Nickname,
 			"avatar":   user.Avatar,
 			"provider": "github",
+			"role":     user.Role,
 		},
 	})
 }

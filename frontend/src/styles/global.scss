@@ -17,8 +17,9 @@ body {
   font-family: $font-family;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color: #303133;
-  background-color: #f0f2f5;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 #app {
@@ -27,11 +28,12 @@ body {
 }
 
 a {
-  color: $primary-color;
+  color: var(--accent-color);
   text-decoration: none;
+  transition: color 0.2s;
 
   &:hover {
-    text-decoration: underline;
+    color: var(--accent-color-hover);
   }
 }
 
@@ -42,43 +44,144 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #dcdfe6;
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 
   &:hover {
-    background: #c0c4cc;
+    background: var(--accent-color);
   }
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--scrollbar-track);
 }
 
-// ===== Element Plus Overrides =====
+// ===== Element Plus Theme Overrides =====
+
+// Card
 .el-card {
-  border-radius: 8px !important;
-  border: none !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06) !important;
+  background-color: var(--card-bg) !important;
+  border: var(--card-border) !important;
+  border-radius: var(--card-radius) !important;
+  box-shadow: var(--card-shadow) !important;
+  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
 }
 
 .el-card__header {
-  border-bottom: 1px solid #f0f0f0 !important;
+  border-bottom: 1px solid var(--border-color-light) !important;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
+}
+
+// Table
+.el-table {
+  --el-table-bg-color: var(--card-bg);
+  --el-table-tr-bg-color: var(--card-bg);
+  --el-table-header-bg-color: var(--bg-secondary);
+  --el-table-row-hover-bg-color: var(--accent-color-light);
+  --el-table-border-color: var(--border-color);
+  --el-table-text-color: var(--text-primary);
+  --el-table-header-text-color: var(--text-secondary);
 }
 
 .el-table th.el-table__cell {
-  background-color: #fafafa !important;
-  color: #606266;
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-secondary) !important;
   font-weight: 600;
 }
 
+// Dialog
 .el-dialog {
-  border-radius: 12px !important;
+  border-radius: $border-radius-lg !important;
+  background-color: var(--card-bg) !important;
 }
 
+.el-dialog__header {
+  color: var(--text-primary);
+}
+
+// Button primary brand color
 .el-button--primary {
-  --el-button-bg-color: #{$primary-color};
+  --el-button-bg-color: var(--accent-color);
+  --el-button-hover-bg-color: var(--accent-color-hover);
+  --el-button-active-bg-color: #{$brand-color-active};
+}
+
+// Form
+.el-form-item__label {
+  color: var(--text-primary) !important;
+}
+
+.el-input__wrapper {
+  background-color: var(--bg-primary) !important;
+  box-shadow: 0 0 0 1px var(--border-color) inset !important;
+
+  &:hover {
+    box-shadow: 0 0 0 1px var(--accent-color) inset !important;
+  }
+}
+
+.el-input__inner {
+  color: var(--text-primary) !important;
+}
+
+.el-input__inner::placeholder {
+  color: var(--text-tertiary) !important;
+}
+
+// Menu
+.el-menu {
+  border-right: none !important;
+}
+
+// Dropdown
+.el-dropdown-menu {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.el-dropdown-menu__item {
+  color: var(--text-primary) !important;
+
+  &:hover {
+    background-color: var(--accent-color-light) !important;
+    color: var(--accent-color) !important;
+  }
+}
+
+// Breadcrumb
+.el-breadcrumb__inner {
+  color: var(--text-secondary) !important;
+}
+
+// Divider
+.el-divider__text {
+  background-color: var(--card-bg) !important;
+  color: var(--text-tertiary) !important;
+}
+
+// Tag
+.el-tag {
+  border-radius: 4px;
+}
+
+// Checkbox
+.el-checkbox__label {
+  color: var(--text-secondary) !important;
+}
+
+// Tabs
+.el-tabs__item {
+  color: var(--text-secondary) !important;
+  font-size: 15px;
+}
+
+.el-tabs__item.is-active {
+  color: var(--accent-color) !important;
+}
+
+.el-tabs__active-bar {
+  background-color: var(--accent-color) !important;
 }
 
 // ===== Utility Classes =====

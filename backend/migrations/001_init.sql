@@ -261,4 +261,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 );
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
 
+-- Add role column to users (0=普通用户, 10=管理员, 100=root)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role INTEGER NOT NULL DEFAULT 0;
+
 COMMIT;

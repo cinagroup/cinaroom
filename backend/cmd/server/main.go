@@ -58,9 +58,10 @@ func main() {
 	openclawHandler := handler.NewOpenClawHandler(cfg, openclawService)
 	remoteHandler := handler.NewRemoteHandler(cfg)
 	systemHandler := handler.NewSystemHandler(cfg)
+	adminHandler := handler.NewAdminHandler(cfg)
 
 	// 注册路由
-	registerRoutes(r, authHandler, oauthHandler, vmHandler, mountHandler, openclawHandler, remoteHandler, systemHandler, cfg)
+	registerRoutes(r, authHandler, oauthHandler, vmHandler, mountHandler, openclawHandler, remoteHandler, systemHandler, adminHandler, cfg)
 
 	// 创建 HTTP 服务器
 	srv := &http.Server{
@@ -104,6 +105,7 @@ func registerRoutes(
 	openclawHandler *handler.OpenClawHandler,
 	remoteHandler *handler.RemoteHandler,
 	systemHandler *handler.SystemHandler,
+	adminHandler *handler.AdminHandler,
 	cfg *config.Config,
 ) {
 	// 健康检查
@@ -203,12 +205,29 @@ func registerRoutes(
 			system := authorized.Group("/system")
 			{
 				system.GET("/setting", systemHandler.GetSystemSetting)
-				system.PUT("/setting", systemHandler.UpdateSystemSetting)
+				system.PUT("/setting", middleware.AdminRequired(), systemHandler.UpdateSystemSetting)
 				system.GET("/version", systemHandler.GetSystemVersion)
 				system.GET("/dashboard", systemHandler.GetDashboard)
 				system.GET("/statistics", systemHandler.GetStatistics)
 				system.GET("/search", systemHandler.SearchVMs)
 				system.POST("/batch-vm", systemHandler.BatchOperateVMs)
+			}
+
+			// 管理员模块
+			admin := authorized.Group("/admin")
+			admin.Use(middleware.AdminRequired())
+			{
+				admin.GET("/users", adminHandler.ListUsers)
+				admin.GET("/users/:id", adminHandler.GetUser)
+				admin.GET("/stats", adminHandler.GetSystemStats)
+
+				// Root 专属路由
+				root := admin.Group("")
+				root.Use(middleware.RootRequired())
+				{
+					root.PUT("/users/:id/role", adminHandler.UpdateUserRole)
+					root.DELETE("/users/:id", adminHandler.DeleteUser)
+				}
 			}
 		}
 	}

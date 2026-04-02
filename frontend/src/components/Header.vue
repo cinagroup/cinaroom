@@ -1,5 +1,5 @@
 <template>
-  <div class="header">
+  <div class="header-bar">
     <div class="header-left">
       <slot name="left"></slot>
     </div>
@@ -16,14 +16,16 @@
 </script>
 
 <style scoped lang="scss">
-.header {
-  background-color: #fff;
-  border-radius: $border-radius;
+.header-bar {
+  background-color: var(--card-bg);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border-color-light);
   padding: 15px 20px;
   margin-bottom: $content-margin;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.3s, border-color 0.3s;
 }
 </style>

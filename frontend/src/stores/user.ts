@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { UserInfo, LoginParams, RegisterParams } from '@/types/user'
 import * as authApi from '@/api/auth'
+import { isAdmin as checkIsAdmin, isRoot as checkIsRoot } from '@/utils/auth'
 
 export const useUserStore = defineStore('user', () => {
   // State
@@ -15,6 +16,9 @@ export const useUserStore = defineStore('user', () => {
   const email = computed(() => userInfo.value.email || '')
   const avatar = computed(() => userInfo.value.avatar || '')
   const roles = computed(() => userInfo.value.roles || [])
+  const role = computed(() => (userInfo.value as any).role ?? 0)
+  const isAdmin = computed(() => checkIsAdmin(userInfo.value))
+  const isRoot = computed(() => checkIsRoot(userInfo.value))
 
   // Actions
   function setToken(newToken: string) {
@@ -27,11 +31,27 @@ export const useUserStore = defineStore('user', () => {
     localStorage.setItem('userInfo', JSON.stringify(info))
   }
 
+  /** 从 JWT 解析 role */
+  function parseRoleFromToken(tokenStr: string): number {
+    try {
+      const parts = tokenStr.split('.')
+      if (parts.length !== 3) return 0
+      const payload = JSON.parse(atob(parts[1]))
+      return payload.role ?? 0
+    } catch {
+      return 0
+    }
+  }
+
   async function login(params: LoginParams) {
     loading.value = true
     try {
       const res = await authApi.login(params)
       const { token: newToken, user } = (res as any).data || res
+      // 如果 user 中没有 role，从 JWT 解析
+      if (user && !user.role) {
+        user.role = parseRoleFromToken(newToken)
+      }
       setToken(newToken)
       setUserInfo(user)
       return user
@@ -53,6 +73,10 @@ export const useUserStore = defineStore('user', () => {
     try {
       const res = await authApi.getUserInfo()
       const user = (res as any).data || res
+      // 如果 user 中没有 role，从 token 解析
+      if (user && !user.role && token.value) {
+        user.role = parseRoleFromToken(token.value)
+      }
       setUserInfo(user)
       return user
     } catch {
@@ -93,6 +117,9 @@ export const useUserStore = defineStore('user', () => {
     email,
     avatar,
     roles,
+    role,
+    isAdmin,
+    isRoot,
     setToken,
     setUserInfo,
     login,

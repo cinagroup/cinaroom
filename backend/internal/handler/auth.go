@@ -74,6 +74,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		Email:    req.Email,
 		Password: string(hashedPassword),
 		Active:   true,
+		Role:     0, // 普通用户
 	}
 
 	if err := db.Create(&user).Error; err != nil {
@@ -82,7 +83,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	token, err := middleware.GenerateToken(&h.cfg.JWT, user.ID, user.Username)
+	token, err := middleware.GenerateToken(&h.cfg.JWT, user.ID, user.Username, user.Role)
 	if err != nil {
 		slog.Error("token generation failed", "error", err)
 		response.InternalError(c, "Token 生成失败")
@@ -149,7 +150,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	}
 	db.Create(&loginLog)
 
-	token, err := middleware.GenerateToken(&h.cfg.JWT, user.ID, user.Username)
+	token, err := middleware.GenerateToken(&h.cfg.JWT, user.ID, user.Username, user.Role)
 	if err != nil {
 		slog.Error("token generation failed", "error", err)
 		response.InternalError(c, "Token 生成失败")
@@ -166,6 +167,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 			"email":    user.Email,
 			"nickname": user.Nickname,
 			"avatar":   user.Avatar,
+			"role":     user.Role,
 		},
 	})
 }
@@ -281,6 +283,7 @@ func (h *AuthHandler) GetUserInfo(c *gin.Context) {
 		"created_at":         user.CreatedAt,
 		"last_login_at":      user.LastLoginAt,
 		"two_factor_enabled": user.TwoFactorEnabled,
+		"role":               user.Role,
 	})
 }
 
