@@ -1,14 +1,18 @@
 package tests
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/cinagroup/cinaseek/backend/internal/config"
 	"github.com/cinagroup/cinaseek/backend/internal/handler"
 	"github.com/cinagroup/cinaseek/backend/internal/oauth"
+
+	"crypto/rand"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -50,34 +54,41 @@ func TestOAuthHandler_Providers(t *testing.T) {
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var response struct {
-		Code      int    `json:"code"`
-		Providers []struct {
-			Name    string `json:"name"`
-			Display string `json:"display_name"`
-			Enabled bool   `json:"enabled"`
+		Code int `json:"code"`
+		Data struct {
+			Providers []struct {
+				Name    string `json:"name"`
+				Display string `json:"display_name"`
+				Enabled bool   `json:"enabled"`
+			} `json:"providers"`
+			Note string `json:"note"`
 		} `json:"data"`
 	}
 
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
-	assert.Greater(t, len(response.Providers), 0)
+	assert.Greater(t, len(response.Data.Providers), 0)
 }
 
 // TestGenerateState 测试随机 state 生成
 func TestGenerateState(t *testing.T) {
-	// 生成两个 state，应该不相同
-	state1 := generateState()
-	state2 := generateState()
+	// Use crypto/rand to generate two states
+	state1 := generateTestState()
+	state2 := generateTestState()
 
 	assert.NotEqual(t, state1, state2)
 	assert.Len(t, state1, 64) // 32 bytes = 64 hex characters
 	assert.Len(t, state2, 64)
 }
 
-// generateState 复制自 handler/oauth.go
-func generateState() string {
-	// 测试环境使用简单实现
-	return "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
+// generateTestState generates a random state using crypto/rand
+func generateTestState() string {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		t := testing.T{}
+		t.Fatalf("failed to generate random state: %v", err)
+	}
+	return hex.EncodeToString(bytes)
 }
 
 // TestOAuthConfig_EnvironmentVariables 测试环境变量加载
