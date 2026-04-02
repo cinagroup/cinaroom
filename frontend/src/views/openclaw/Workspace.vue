@@ -148,7 +148,7 @@ const handleDelete = (ws) => {
       
       .el-icon {
         margin-right: 8px;
-        color: $primary-color;
+        color: var(--accent-color);
       }
       
       .label {

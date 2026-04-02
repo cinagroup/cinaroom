@@ -183,13 +183,13 @@ const handleRestartService = (service) => {
     display: flex;
     align-items: center;
     padding: 10px 15px;
-    background-color: #f5f7fa;
+    background-color: var(--bg-secondary);
     border-radius: $border-radius;
     margin-bottom: 15px;
     
     .el-icon {
       margin-right: 8px;
-      color: $primary-color;
+      color: var(--accent-color);
     }
   }
 }

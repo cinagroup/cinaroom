@@ -1,103 +1,108 @@
 <template>
-  <div class="login-container" :class="{ 'dark-theme': appStore.isDark }">
+  <div class="login-page" :class="{ dark: appStore.isDark }">
+    <!-- Background -->
     <div class="login-bg">
       <div class="bg-shape shape-1"></div>
       <div class="bg-shape shape-2"></div>
       <div class="bg-shape shape-3"></div>
     </div>
 
-    <el-card class="login-card">
-      <template #header>
-        <div class="card-header">
-          <div class="brand">
-            <h1>CinaSeek</h1>
-            <span class="brand-sub">云端开发工作室</span>
-          </div>
-        </div>
-      </template>
-      
-      <div class="login-content">
-        <!-- OAuth 登录 -->
-        <div class="oauth-section">
-          <h3>使用 CinaToken 账号登录</h3>
-          <p class="oauth-desc">支持 GitHub、Google、Microsoft 等 9+ 平台统一认证</p>
-          
-          <el-button
-            type="primary"
-            size="large"
-            :loading="oauthLoading"
-            @click="handleOAuthLogin"
-            class="oauth-btn"
+    <!-- Login Card -->
+    <div class="login-card">
+      <!-- Logo -->
+      <div class="login-brand">
+        <h1 class="brand-title">CinaSeek</h1>
+        <p class="brand-subtitle">云端开发工作室</p>
+      </div>
+
+      <!-- Tabs -->
+      <el-tabs v-model="activeTab" class="login-tabs">
+        <!-- Account Login -->
+        <el-tab-pane label="账号登录" name="account">
+          <el-form
+            ref="formRef"
+            :model="loginForm"
+            :rules="rules"
+            label-position="top"
+            @submit.prevent="handleLogin"
+            class="login-form"
           >
-            <el-icon><Connection /></el-icon>
-            使用 CinaToken 登录
-          </el-button>
-        </div>
-        
-        <el-divider>
-          <span class="divider-text">或使用密码登录</span>
-        </el-divider>
-        
-        <!-- 传统登录 -->
-        <el-form
-          ref="formRef"
-          :model="loginForm"
-          :rules="rules"
-          label-position="top"
-          @submit.prevent="handleLogin"
-        >
-          <el-form-item label="用户名" prop="username">
-            <el-input
-              v-model="loginForm.username"
-              placeholder="请输入用户名或邮箱"
-              :prefix-icon="User"
-              size="large"
-              clearable
-            />
-          </el-form-item>
-          
-          <el-form-item label="密码" prop="password">
-            <el-input
-              v-model="loginForm.password"
-              type="password"
-              placeholder="请输入密码"
-              :prefix-icon="Lock"
-              size="large"
-              show-password
-              @keyup.enter="handleLogin"
-            />
-          </el-form-item>
-          
-          <div class="form-options">
-            <el-checkbox v-model="loginForm.remember">记住我</el-checkbox>
-          </div>
-          
-          <el-form-item>
+            <el-form-item prop="username">
+              <el-input
+                v-model="loginForm.username"
+                placeholder="请输入用户名或邮箱"
+                size="large"
+                clearable
+              >
+                <template #prefix>
+                  <component :is="UserIcon" :size="16" style="color: var(--text-tertiary)" />
+                </template>
+              </el-input>
+            </el-form-item>
+
+            <el-form-item prop="password">
+              <el-input
+                v-model="loginForm.password"
+                type="password"
+                placeholder="请输入密码"
+                size="large"
+                show-password
+                @keyup.enter="handleLogin"
+              >
+                <template #prefix>
+                  <component :is="LockIcon" :size="16" style="color: var(--text-tertiary)" />
+                </template>
+              </el-input>
+            </el-form-item>
+
+            <div class="form-options">
+              <el-checkbox v-model="loginForm.remember">记住我</el-checkbox>
+            </div>
+
             <el-button
-              type="default"
+              type="primary"
               size="large"
               :loading="loginLoading"
               @click="handleLogin"
-              style="width: 100%"
+              class="login-btn"
             >
               登录
             </el-button>
-          </el-form-item>
-        </el-form>
-        
-        <div class="links">
-          <router-link to="/register">没有账号？立即注册</router-link>
-          <span class="divider">|</span>
-          <a href="#" @click.prevent="showProviders">查看支持的登录方式</a>
-        </div>
+          </el-form>
+        </el-tab-pane>
+
+        <!-- OAuth Login -->
+        <el-tab-pane label="OAuth 登录" name="oauth">
+          <div class="oauth-section">
+            <p class="oauth-desc">支持 GitHub、Google、Microsoft 等 9+ 平台统一认证</p>
+
+            <button
+              class="github-btn"
+              :disabled="oauthLoading"
+              @click="handleOAuthLogin"
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              </svg>
+              <span>{{ oauthLoading ? '跳转中...' : '使用 CinaToken 账号登录' }}</span>
+            </button>
+
+            <a href="#" class="view-providers" @click.prevent="showProviders">查看支持的登录方式</a>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+
+      <!-- Register Link -->
+      <div class="login-footer">
+        <router-link to="/register">还没有账号？立即注册</router-link>
       </div>
-    </el-card>
-    
+    </div>
+
     <!-- 支持的登录方式对话框 -->
     <el-dialog v-model="showProvidersDialog" title="支持的登录平台" width="450px">
       <div class="provider-list">
         <div v-for="p in providers" :key="p.name" class="provider-item">
-          <el-icon size="20"><CircleCheck /></el-icon>
+          <component :is="CircleCheckIcon" :size="18" style="color: var(--success-color)" />
           <span>{{ p.display_name }}</span>
         </div>
         <p class="provider-tip">所有平台通过 CinaToken 统一认证，安全便捷</p>
@@ -107,12 +112,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, shallowRef } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { User, Lock, Connection, CircleCheck } from '@element-plus/icons-vue'
+import { User as UserIcon, Lock as LockIcon, CircleCheck as CircleCheckIcon } from 'lucide-vue-next'
 import * as authApi from '@/api/auth'
 import type { OAuthProvider } from '@/types/user'
 
@@ -125,6 +130,7 @@ const oauthLoading = ref(false)
 const loginLoading = ref(false)
 const showProvidersDialog = ref(false)
 const providers = ref<OAuthProvider[]>([])
+const activeTab = ref('account')
 
 const loginForm = reactive({
   username: '',
@@ -195,7 +201,7 @@ const showProviders = async () => {
 </script>
 
 <style scoped lang="scss">
-.login-container {
+.login-page {
   height: 100vh;
   display: flex;
   align-items: center;
@@ -249,85 +255,135 @@ const showProviders = async () => {
 }
 
 .login-card {
-  width: 440px;
+  width: 420px;
   position: relative;
   z-index: 1;
-  border-radius: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color-light);
+  border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  
-  .card-header {
-    text-align: center;
-    
-    .brand {
-      h1 {
-        margin: 0;
-        font-size: 28px;
-        background: linear-gradient(135deg, #4A90D9, #667eea);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        letter-spacing: 2px;
-      }
-      
-      .brand-sub {
-        color: #909399;
-        font-size: 14px;
-      }
-    }
+  padding: 40px 36px 32px;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: 32px;
+
+  .brand-title {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #4A90D9, #667eea);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+  }
+
+  .brand-subtitle {
+    margin: 8px 0 0;
+    color: var(--text-tertiary);
+    font-size: 14px;
   }
 }
 
-.login-content {
-  .oauth-section {
-    text-align: center;
-    padding: 15px 0;
-    
-    h3 {
-      margin: 0 0 8px;
-      font-size: 15px;
-      color: #303133;
-    }
-    
-    .oauth-desc {
-      margin: 0 0 16px;
-      color: #909399;
-      font-size: 13px;
-    }
-    
-    .oauth-btn {
-      width: 100%;
-      height: 44px;
-      font-size: 15px;
-      border-radius: 8px;
-    }
+.login-tabs {
+  :deep(.el-tabs__header) {
+    margin-bottom: 24px;
   }
-  
+
+  :deep(.el-tabs__nav-wrap::after) {
+    background-color: var(--border-color-light);
+  }
+
+  :deep(.el-tabs__item) {
+    font-size: 15px;
+    font-weight: 500;
+  }
+}
+
+.login-form {
   .form-options {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 18px;
   }
+
+  .login-btn {
+    width: 100%;
+    height: 44px;
+    font-size: 15px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
 }
 
-.links {
+.oauth-section {
   text-align: center;
-  margin-top: 12px;
-  
-  a {
-    color: #4A90D9;
-    text-decoration: none;
-    font-size: 13px;
-    transition: color 0.2s;
-    
+  padding: 20px 0;
+
+  .oauth-desc {
+    margin: 0 0 24px;
+    color: var(--text-tertiary);
+    font-size: 14px;
+  }
+
+  .github-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    height: 48px;
+    background: #24292e;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
     &:hover {
-      color: #667eea;
+      background: #2f363d;
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
   }
-  
-  .divider {
-    margin: 0 10px;
-    color: #dcdfe6;
+
+  .view-providers {
+    display: inline-block;
+    margin-top: 16px;
+    color: var(--accent-color);
+    font-size: 13px;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--accent-color-hover);
+    }
+  }
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color-light);
+
+  a {
+    color: var(--accent-color);
+    font-size: 14px;
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      color: var(--accent-color-hover);
+    }
   }
 }
 
@@ -337,12 +393,12 @@ const showProviders = async () => {
     align-items: center;
     gap: 10px;
     padding: 8px 0;
-    color: #303133;
+    color: var(--text-primary);
   }
-  
+
   .provider-tip {
     margin-top: 15px;
-    color: #909399;
+    color: var(--text-tertiary);
     font-size: 13px;
     text-align: center;
   }

@@ -40,19 +40,20 @@ $breakpoint-tablet: 1024px;
   --bg-header: rgba(255, 255, 255, 0.85);
 
   --text-primary: #1a1a2e;
-  --text-secondary: #606266;
+  --text-secondary: #64748b;
   --text-tertiary: #909399;
   --text-sidebar: #b0bec5;
   --text-sidebar-active: #ffffff;
   --text-sidebar-group: rgba(255, 255, 255, 0.45);
 
-  --border-color: #e4e7ed;
+  --border-color: #e2e8f0;
   --border-color-light: #ebeef5;
 
   --accent-color: #4A90D9;
   --accent-color-hover: #3A7BD5;
   --accent-color-light: rgba(74, 144, 217, 0.1);
 
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -61,7 +62,6 @@ $breakpoint-tablet: 1024px;
   --card-radius: 8px;
   --card-padding: 20px;
   --card-border: 1px solid var(--border-color-light);
-  --card-shadow: var(--shadow-sm);
 
   --scrollbar-thumb: #c0c4cc;
   --scrollbar-track: transparent;
@@ -70,40 +70,40 @@ $breakpoint-tablet: 1024px;
 }
 
 [data-theme="dark"] {
-  --bg-primary: #141414;
-  --bg-secondary: #1e1e1e;
-  --bg-tertiary: #2a2a2a;
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-tertiary: #2a2a3e;
   --bg-sidebar: #0d1117;
   --bg-sidebar-hover: #161b22;
   --bg-sidebar-active: rgba(74, 144, 217, 0.2);
-  --bg-header: rgba(20, 20, 20, 0.85);
+  --bg-header: rgba(26, 26, 46, 0.85);
 
-  --text-primary: #e5eaf3;
-  --text-secondary: #a3a6ad;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
   --text-tertiary: #6c6e72;
   --text-sidebar: #8b949e;
   --text-sidebar-active: #f0f6fc;
   --text-sidebar-group: rgba(139, 148, 158, 0.5);
 
-  --border-color: #363637;
-  --border-color-light: #2c2c2d;
+  --border-color: #2d3748;
+  --border-color-light: #2c2c3d;
 
-  --accent-color: #4A90D9;
+  --accent-color: #63b3ed;
   --accent-color-hover: #6AADE0;
-  --accent-color-light: rgba(74, 144, 217, 0.15);
+  --accent-color-light: rgba(99, 179, 237, 0.15);
 
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 
-  --card-bg: #1e1e1e;
+  --card-bg: #1e1e2e;
   --card-radius: 8px;
   --card-padding: 20px;
   --card-border: 1px solid var(--border-color-light);
-  --card-shadow: var(--shadow-sm);
 
-  --scrollbar-thumb: #4a4a4a;
+  --scrollbar-thumb: #4a4a5a;
   --scrollbar-track: transparent;
 
-  --el-bg-overlay: #1e1e1e;
+  --el-bg-overlay: #1e1e2e;
 }

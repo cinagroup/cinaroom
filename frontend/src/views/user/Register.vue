@@ -229,7 +229,7 @@ const handleRegister = async () => {
     h2 {
       margin: 0 0 8px;
       font-size: 26px;
-      color: $primary-color;
+      color: var(--accent-color);
       font-weight: 700;
     }
     p {
@@ -274,7 +274,7 @@ const handleRegister = async () => {
   font-size: 14px;
 
   a {
-    color: $primary-color;
+    color: var(--accent-color);
     margin-left: 4px;
     font-weight: 500;
   }

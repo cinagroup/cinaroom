@@ -236,7 +236,6 @@ import {
   LogOut,
   Sun,
   Moon,
-  Monitor as MonitorIcon,
   ChevronDown,
   ChevronLeft,
   PanelLeftClose,
@@ -248,7 +247,7 @@ import {
 const icons = {
   Monitor, Terminal, FolderOpen, Settings, CloudUpload, Activity, Briefcase, Link,
   Users, FileText, User, UserCircle, Shield, LogOut, Sun, Moon,
-  Monitor: MonitorIcon, ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, Menu
+  ChevronDown, ChevronLeft, PanelLeftClose, PanelLeftOpen, Menu
 }
 
 const route = useRoute()
@@ -280,7 +279,7 @@ const breadcrumbs = computed(() => {
 
 // 主题图标
 const themeIcon = computed(() => {
-  if (appStore.theme === 'auto') return MonitorIcon
+  if (appStore.theme === 'auto') return Monitor
   return appStore.isDark ? Moon : Sun
 })
 
@@ -314,7 +313,6 @@ const openClawMenus: MenuItem[] = [
 const adminMenus = computed<MenuItem[]>(() => {
   if (!userStore.isAdmin) return []
   return [
-    { path: '/vms', title: '虚拟机管理', icon: Monitor, requireAdmin: true },
     { path: '/admin/users', title: '用户管理', icon: Users, requireAdmin: true },
     { path: '/admin/logs', title: '系统日志', icon: FileText, requireAdmin: true },
     { path: '/admin/settings', title: '系统设置', icon: Settings, requireAdmin: true },

@@ -174,7 +174,7 @@ onUnmounted(() => {
 
 .loading-icon {
   animation: spin 1.2s linear infinite;
-  color: $primary-color;
+  color: var(--accent-color);
 }
 
 .loading-text {
