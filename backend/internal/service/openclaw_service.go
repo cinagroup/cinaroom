@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cinagroup/cinaseek/backend/internal/cinaclaw"
+	ocmetrics "github.com/cinagroup/cinaseek/backend/internal/openclaw"
 	"github.com/cinagroup/cinaseek/backend/internal/model"
 	"github.com/cinagroup/cinaseek/backend/internal/repository"
 	"gorm.io/gorm"
@@ -335,3 +337,203 @@ func (s *OpenClawService) logVMOperation(vmID uint, operation, result, message s
 		slog.Error("failed to write vm log", "error", err, "vm_id", vmID)
 	}
 }
+
+// ─── Stage 2: OpenClaw Service Management API ─────────────────────────────────
+
+// vmNameByID resolves a VM name from its database ID, scoped to the user.
+func (s *OpenClawService) vmNameByID(vmID, userID uint) (string, error) {
+	vm, err := s.vmRepo.FindByID(vmID, userID)
+	if err != nil {
+		return "", ErrVMNotFound
+	}
+	return vm.Name, nil
+}
+
+// InstallOpenClaw deploys OpenClaw into the specified VM by executing the
+// install-openclaw.sh script via CinaClaw.
+func (s *OpenClawService) InstallOpenClaw(vmName string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
+	defer cancel()
+
+	client, err := s.clientMgr.GetClient("system")
+	if err != nil {
+		return fmt.Errorf("cinaclaw client: %w", err)
+	}
+
+	// Verify VM exists and is running.
+	info, err := client.GetVMInfo(ctx, vmName)
+	if err != nil {
+		return fmt.Errorf("get vm info: %w", err)
+	}
+	if info.Status != "RUNNING" {
+		return fmt.Errorf("vm %q is not running (status: %s)", vmName, info.Status)
+	}
+
+	// TODO: SSH into VM and execute the install script.
+	//   The actual implementation would use SSH to run:
+	//   curl -fsSL <script-url> | bash
+	//   or copy scripts/install-openclaw.sh and execute it.
+	slog.Info("openclaw install initiated", "vm_name", vmName)
+	return nil
+}
+
+// GetOpenClawStatus returns the runtime status of OpenClaw inside a VM.
+func (s *OpenClawService) GetOpenClawStatus(vmName string) (*ocmetrics.Status, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	client, err := s.clientMgr.GetClient("system")
+	if err != nil {
+		return nil, fmt.Errorf("cinaclaw client: %w", err)
+	}
+
+	info, err := client.GetVMInfo(ctx, vmName)
+	if err != nil {
+		return nil, fmt.Errorf("get vm info: %w", err)
+	}
+
+	// TODO: SSH into VM and check openclaw service status.
+	//   systemctl is-active openclaw
+	//   openclaw --version
+	//   Parse the output to populate the struct.
+	_ = info
+	return &ocmetrics.Status{
+		Running:       false,
+		Version:       "",
+		Uptime:        0,
+		GatewayPort:   3271,
+		ActiveConnections: 0,
+	}, nil
+}
+
+// StartOpenClaw starts the OpenClaw service inside the specified VM.
+func (s *OpenClawService) StartOpenClaw(vmName string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	client, err := s.clientMgr.GetClient("system")
+	if err != nil {
+		return fmt.Errorf("cinaclaw client: %w", err)
+	}
+
+	info, err := client.GetVMInfo(ctx, vmName)
+	if err != nil {
+		return fmt.Errorf("get vm info: %w", err)
+	}
+	if info.Status != "RUNNING" {
+		return fmt.Errorf("vm %q is not running", vmName)
+	}
+
+	// TODO: SSH into VM and run: systemctl start openclaw
+	slog.Info("openclaw start initiated", "vm_name", vmName)
+	return nil
+}
+
+// StopOpenClaw stops the OpenClaw service inside the specified VM.
+func (s *OpenClawService) StopOpenClaw(vmName string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	client, err := s.clientMgr.GetClient("system")
+	if err != nil {
+		return fmt.Errorf("cinaclaw client: %w", err)
+	}
+
+	info, err := client.GetVMInfo(ctx, vmName)
+	if err != nil {
+		return fmt.Errorf("get vm info: %w", err)
+	}
+	if info.Status != "RUNNING" {
+		return fmt.Errorf("vm %q is not running", vmName)
+	}
+
+	// TODO: SSH into VM and run: systemctl stop openclaw
+	slog.Info("openclaw stop initiated", "vm_name", vmName)
+	return nil
+}
+
+// RestartOpenClaw restarts the OpenClaw service inside the specified VM.
+func (s *OpenClawService) RestartOpenClaw(vmName string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+
+	client, err := s.clientMgr.GetClient("system")
+	if err != nil {
+		return fmt.Errorf("cinaclaw client: %w", err)
+	}
+
+	info, err := client.GetVMInfo(ctx, vmName)
+	if err != nil {
+		return fmt.Errorf("get vm info: %w", err)
+	}
+	if info.Status != "RUNNING" {
+		return fmt.Errorf("vm %q is not running", vmName)
+	}
+
+	// TODO: SSH into VM and run: systemctl restart openclaw
+	slog.Info("openclaw restart initiated", "vm_name", vmName)
+	return nil
+}
+
+// GetOpenClawLogs retrieves the last `lines` lines of OpenClaw journal logs from
+// the specified VM.
+func (s *OpenClawService) GetOpenClawLogs(vmName string, lines int) ([]string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	client, err := s.clientMgr.GetClient("system")
+	if err != nil {
+		return nil, fmt.Errorf("cinaclaw client: %w", err)
+	}
+
+	info, err := client.GetVMInfo(ctx, vmName)
+	if err != nil {
+		return nil, fmt.Errorf("get vm info: %w", err)
+	}
+	_ = info
+
+	if lines <= 0 {
+		lines = 100
+	}
+
+	// TODO: SSH into VM and run:
+	//   journalctl -u openclaw -n <lines> --no-pager
+	//   Parse output lines.
+	return []string{
+		"[INFO] OpenClaw log placeholder — connect via SSH for real logs",
+	}, nil
+}
+
+// GetOpenClawResourceUsage returns resource usage metrics for OpenClaw running
+// inside the specified VM.
+func (s *OpenClawService) GetOpenClawResourceUsage(vmName string) (*ocmetrics.ResourceUsage, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	client, err := s.clientMgr.GetClient("system")
+	if err != nil {
+		return nil, fmt.Errorf("cinaclaw client: %w", err)
+	}
+
+	// Fetch VM-level metrics from CinaClaw.
+	vmMetrics, err := client.GetMetrics(ctx, vmName)
+	if err != nil {
+		return nil, fmt.Errorf("get vm metrics: %w", err)
+	}
+
+	usage := &ocmetrics.ResourceUsage{
+		CPUUsage:         vmMetrics.CPUUsage,
+		MemoryUsageMB:    vmMetrics.MemoryUsage,
+		DiskUsagePercent: vmMetrics.DiskUsage,
+	}
+
+	// TODO: SSH into VM and get process-level metrics:
+	//   pid=$(pgrep -f "openclaw gateway")
+	//   Read /proc/$pid/stat, /proc/$pid/status, /proc/$pid/fd
+	//   Parse into ResourceUsage fields.
+
+	return usage, nil
+}
+
+// keep strings import used.
+var _ = strings.TrimSpace

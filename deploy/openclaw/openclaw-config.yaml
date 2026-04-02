@@ -1,0 +1,10 @@
+# OpenClaw 默认配置（CinaSeek 适配版）
+gateway:
+  port: 3271
+  host: 0.0.0.0
+
+workspace:
+  path: /root/.openclaw/workspace
+
+models:
+  default: gpt-4o

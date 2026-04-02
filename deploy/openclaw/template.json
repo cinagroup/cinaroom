@@ -1,0 +1,8 @@
+{
+  "name": "openclaw-template",
+  "cpu": 4,
+  "memory": "8G",
+  "disk": "50G",
+  "image": "22.04",
+  "description": "OpenClaw AI 开发环境预配置模板"
+}

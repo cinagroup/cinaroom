@@ -20,7 +20,10 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// JWTAuth returns a middleware that validates Bearer tokens.
+// RefreshWindow is how long before expiry we allow a proactive refresh.
+const RefreshWindow = 30 * time.Minute
+
+// JWTAuth returns a middleware that validates Bearer tokens with auto-refresh.
 func JWTAuth(cfg *config.JWTConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -53,8 +56,34 @@ func JWTAuth(cfg *config.JWTConfig) gin.HandlerFunc {
 
 		c.Set("userID", claims.UserID)
 		c.Set("username", claims.Username)
+
+		// Proactive refresh: if the token is within RefreshWindow of expiry,
+		// generate a fresh token and return it in the response header.
+		if shouldRefresh(claims) {
+			newToken, refreshErr := GenerateToken(cfg, claims.UserID, claims.Username)
+			if refreshErr == nil {
+				c.Header("X-New-Token", newToken)
+				c.Header("X-Token-Refreshed", "true")
+				slog.Debug("JWT token proactively refreshed",
+					"user_id", claims.UserID,
+					"username", claims.Username,
+				)
+			} else {
+				slog.Warn("failed to refresh token", "error", refreshErr)
+			}
+		}
+
 		c.Next()
 	}
+}
+
+// shouldRefresh checks if the token is close to expiry and should be refreshed.
+func shouldRefresh(claims *Claims) bool {
+	if claims.ExpiresAt == nil {
+		return false
+	}
+	timeUntilExpiry := time.Until(claims.ExpiresAt.Time)
+	return timeUntilExpiry > 0 && timeUntilExpiry <= RefreshWindow
 }
 
 // GenerateToken creates a signed JWT for the given user.

@@ -1,0 +1,30 @@
+[Unit]
+Description=OpenClaw AI Agent Runtime
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/openclaw gateway start
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+
+Environment=NODE_ENV=production
+Environment=HOME=/root
+
+WorkingDirectory=/root/.openclaw/workspace
+
+# Security hardening
+NoNewPrivileges=false
+ProtectSystem=false
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=openclaw
+
+[Install]
+WantedBy=multi-user.target
