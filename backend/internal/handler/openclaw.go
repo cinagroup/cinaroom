@@ -6,19 +6,19 @@ import (
 	"time"
 
 	"github.com/cinagroup/cinaseek/backend/internal/config"
-	"github.com/cinagroup/cinaseek/backend/internal/model"
-	"github.com/cinagroup/cinaseek/backend/internal/repository"
+	"github.com/cinagroup/cinaseek/backend/internal/service"
 	"github.com/cinagroup/cinaseek/backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
 
 type OpenClawHandler struct {
-	cfg *config.Config
+	cfg             *config.Config
+	openclawService *service.OpenClawService
 }
 
-func NewOpenClawHandler(cfg *config.Config) *OpenClawHandler {
-	return &OpenClawHandler{cfg: cfg}
+func NewOpenClawHandler(cfg *config.Config, openclawService *service.OpenClawService) *OpenClawHandler {
+	return &OpenClawHandler{cfg: cfg, openclawService: openclawService}
 }
 
 // GetOpenClawStatus 获取 OpenClaw 状态
@@ -41,28 +41,17 @@ func (h *OpenClawHandler) GetOpenClawStatus(c *gin.Context) {
 		return
 	}
 
-	db := repository.GetDB()
-
-	// 验证虚拟机归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	result, err := h.openclawService.GetStatus(uint(vmID), userID.(uint))
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		response.InternalError(c, "查询失败："+err.Error())
 		return
 	}
 
-	// 获取 OpenClaw 配置
-	var ocConfig model.OpenClawConfig
-	if err := db.Where("vm_id = ?", vmID).First(&ocConfig).Error; err != nil {
-		response.NotFound(c, "OpenClaw 未配置")
-		return
-	}
-
-	response.Success(c, gin.H{
-		"status":      ocConfig.Status,
-		"version":     ocConfig.Version,
-		"running_time": ocConfig.RunningTime,
-		"last_deployed_at": ocConfig.LastDeployedAt,
-	})
+	response.Success(c, result)
 }
 
 // DeployOpenClaw 部署 OpenClaw
@@ -73,77 +62,23 @@ func (h *OpenClawHandler) DeployOpenClaw(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		VMID       uint   `json:"vm_id" binding:"required"`
-		Version    string `json:"version"`
-		APIKey     string `json:"api_key"`
-		DefaultModel string `json:"default_model"`
-	}
-
+	var req service.DeployOpenClawRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "参数错误："+err.Error())
 		return
 	}
 
-	db := repository.GetDB()
-
-	// 验证虚拟机归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", req.VMID, userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	result, err := h.openclawService.Deploy(userID.(uint), &req)
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		response.InternalError(c, "部署失败："+err.Error())
 		return
 	}
 
-	// 设置默认值
-	if req.Version == "" {
-		req.Version = "latest"
-	}
-	if req.DefaultModel == "" {
-		req.DefaultModel = "qwencode/qwen3.5-plus"
-	}
-
-	// 创建或更新配置
-	var ocConfig model.OpenClawConfig
-	result := db.Where("vm_id = ?", req.VMID).First(&ocConfig)
-
-	ocConfig.VMID = req.VMID
-	ocConfig.Version = req.Version
-	ocConfig.APIKey = req.APIKey
-	ocConfig.DefaultModel = req.DefaultModel
-	ocConfig.Status = "deploying"
-
-	now := time.Now()
-	ocConfig.LastDeployedAt = &now
-
-	if result.Error != nil {
-		db.Create(&ocConfig)
-	} else {
-		db.Save(&ocConfig)
-	}
-
-	// TODO: 实际部署 OpenClaw
-	// 1. SSH 连接到虚拟机
-	// 2. 安装依赖（Node.js, pnpm 等）
-	// 3. 克隆或更新 OpenClaw
-	// 4. 安装依赖
-	// 5. 配置 openclaw.json
-	// 6. 启动服务
-
-	// 模拟部署过程
-	go func() {
-		// 模拟部署延迟
-		time.Sleep(5 * time.Second)
-		
-		ocConfig.Status = "running"
-		ocConfig.RunningTime = 0
-		db.Save(&ocConfig)
-	}()
-
-	response.SuccessWithMessage(c, "OpenClaw 部署已开始", gin.H{
-		"vm_id":     req.VMID,
-		"version":   req.Version,
-		"status":    "deploying",
-	})
+	response.SuccessWithMessage(c, "OpenClaw 部署已开始", result)
 }
 
 // OperateOpenClaw 操作 OpenClaw（启动/停止/重启/更新）
@@ -154,75 +89,33 @@ func (h *OpenClawHandler) OperateOpenClaw(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	var req struct {
-		Operation string `json:"operation" binding:"required"` // start, stop, restart, update
-		Version   string `json:"version"`
-	}
-
+	var req service.OperateOpenClawRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "参数错误")
 		return
 	}
 
-	db := repository.GetDB()
-
-	// 验证虚拟机归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
-		return
-	}
-
-	// 获取 OpenClaw 配置
-	var ocConfig model.OpenClawConfig
-	if err := db.Where("vm_id = ?", vmID).First(&ocConfig).Error; err != nil {
-		response.NotFound(c, "OpenClaw 未配置")
-		return
-	}
-
-	var message string
-
-	switch req.Operation {
-	case "start":
-		// TODO: SSH 连接到虚拟机，启动 OpenClaw 服务
-		ocConfig.Status = "running"
-		message = "OpenClaw 已启动"
-
-	case "stop":
-		// TODO: SSH 连接到虚拟机，停止 OpenClaw 服务
-		ocConfig.Status = "stopped"
-		message = "OpenClaw 已停止"
-
-	case "restart":
-		// TODO: SSH 连接到虚拟机，重启 OpenClaw 服务
-		ocConfig.Status = "running"
-		message = "OpenClaw 已重启"
-
-	case "update":
-		if req.Version == "" {
-			response.BadRequest(c, "更新操作需要指定版本号")
+	cfg, err := h.openclawService.Operate(uint(vmID), userID.(uint), &req)
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
 			return
 		}
-		// TODO: SSH 连接到虚拟机，更新 OpenClaw 到指定版本
-		ocConfig.Version = req.Version
-		ocConfig.Status = "updating"
-		message = fmt.Sprintf("OpenClaw 正在更新到 %s", req.Version)
-
-	default:
-		response.BadRequest(c, "不支持的操作")
+		if err == service.ErrOpenClawNotConfigured {
+			response.NotFound(c, "OpenClaw 未配置")
+			return
+		}
+		response.InternalError(c, err.Error())
 		return
 	}
 
-	db.Save(&ocConfig)
-
-	response.SuccessWithMessage(c, message, ocConfig)
+	response.SuccessWithMessage(c, "操作成功", cfg)
 }
 
 // GetOpenClawLog 获取 OpenClaw 日志
@@ -233,31 +126,20 @@ func (h *OpenClawHandler) GetOpenClawLog(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	db := repository.GetDB()
-
-	// 验证虚拟机归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	logs, err := h.openclawService.GetLogs(uint(vmID), userID.(uint))
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		response.InternalError(c, "查询失败："+err.Error())
 		return
-	}
-
-	// TODO: SSH 连接到虚拟机，获取 OpenClaw 日志文件内容
-	// 例如：tail -n 100 /root/.openclaw/logs/openclaw.log
-
-	// 模拟日志数据
-	logs := []string{
-		"[INFO] OpenClaw started successfully",
-		"[INFO] Loaded 15 skills",
-		"[INFO] Gateway is running on port 3000",
-		"[INFO] Model: qwencode/qwen3.5-plus",
 	}
 
 	response.Success(c, gin.H{
@@ -274,77 +156,33 @@ func (h *OpenClawHandler) UpdateOpenClawConfig(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	var req struct {
-		DefaultModel   string   `json:"default_model"`
-		APIKey         string   `json:"api_key"`
-		EnabledTools   []string `json:"enabled_tools"`
-		EnabledSkills  []string `json:"enabled_skills"`
-	}
-
+	var req service.UpdateOpenClawConfigRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "参数错误")
 		return
 	}
 
-	db := repository.GetDB()
-
-	// 验证虚拟机归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	cfg, err := h.openclawService.UpdateConfig(uint(vmID), userID.(uint), &req)
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		if err == service.ErrOpenClawNotConfigured {
+			response.NotFound(c, "OpenClaw 未配置")
+			return
+		}
+		response.InternalError(c, "更新失败："+err.Error())
 		return
 	}
 
-	// 获取 OpenClaw 配置
-	var ocConfig model.OpenClawConfig
-	if err := db.Where("vm_id = ?", vmID).First(&ocConfig).Error; err != nil {
-		response.NotFound(c, "OpenClaw 未配置")
-		return
-	}
-
-	// 更新配置
-	if req.DefaultModel != "" {
-		ocConfig.DefaultModel = req.DefaultModel
-	}
-	if req.APIKey != "" {
-		ocConfig.APIKey = req.APIKey
-	}
-	if req.EnabledTools != nil {
-		// 转换为 JSON 字符串存储
-		toolsJSON := "["
-		for i, tool := range req.EnabledTools {
-			if i > 0 {
-				toolsJSON += ","
-			}
-			toolsJSON += fmt.Sprintf(`"%s"`, tool)
-		}
-		toolsJSON += "]"
-		ocConfig.EnabledTools = toolsJSON
-	}
-	if req.EnabledSkills != nil {
-		skillsJSON := "["
-		for i, skill := range req.EnabledSkills {
-			if i > 0 {
-				skillsJSON += ","
-			}
-			skillsJSON += fmt.Sprintf(`"%s"`, skill)
-		}
-		skillsJSON += "]"
-		ocConfig.EnabledSkills = skillsJSON
-	}
-
-	db.Save(&ocConfig)
-
-	// TODO: 更新虚拟机中的 openclaw.json 配置文件
-
-	response.SuccessWithMessage(c, "配置更新成功", ocConfig)
+	response.SuccessWithMessage(c, "配置更新成功", cfg)
 }
 
 // GetOpenClawMonitor 获取 OpenClaw 监控数据
@@ -367,35 +205,21 @@ func (h *OpenClawHandler) GetOpenClawMonitor(c *gin.Context) {
 		return
 	}
 
-	db := repository.GetDB()
-
-	// 验证虚拟机归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	data, err := h.openclawService.GetMonitorData(uint(vmID), userID.(uint))
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		if err == service.ErrOpenClawNotConfigured {
+			response.NotFound(c, "OpenClaw 未配置")
+			return
+		}
+		response.InternalError(c, "查询失败："+err.Error())
 		return
 	}
 
-	// 获取 OpenClaw 配置
-	var ocConfig model.OpenClawConfig
-	if err := db.Where("vm_id = ?", vmID).First(&ocConfig).Error; err != nil {
-		response.NotFound(c, "OpenClaw 未配置")
-		return
-	}
-
-	// TODO: 从虚拟机获取实际监控数据
-	// 这里返回模拟数据
-	response.Success(c, gin.H{
-		"cpu_usage":     25.5,
-		"memory_usage":  512.3,
-		"disk_usage":    15.2,
-		"today_requests": 1250,
-		"avg_response_time": 1.2,
-		"error_rate":    0.5,
-		"active_sessions": 5,
-		"enabled_tools_count": 10,
-		"enabled_skills_count": 15,
-	})
+	response.Success(c, data)
 }
 
 // GetWorkspaceList 获取工作空间列表
@@ -418,32 +242,19 @@ func (h *OpenClawHandler) GetWorkspaceList(c *gin.Context) {
 		return
 	}
 
-	db := repository.GetDB()
-
-	// 验证虚拟机归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	data, err := h.openclawService.GetWorkspaceList(uint(vmID), userID.(uint))
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		response.InternalError(c, "查询失败："+err.Error())
 		return
 	}
 
-	// TODO: SSH 连接到虚拟机，扫描工作空间目录
-	// 返回工作空间列表和统计信息
-
-	// 模拟数据
-	workspaces := []gin.H{
-		{
-			"name":   "default",
-			"path":   "/root/.openclaw/workspace",
-			"size":   1024 * 1024 * 500, // 500MB
-			"file_count": 1250,
-			"last_modified": time.Now(),
-		},
-	}
-
-	response.Success(c, gin.H{
-		"workspaces": workspaces,
-		"total_size": 1024 * 1024 * 500,
-		"total_files": 1250,
-	})
+	response.Success(c, data)
 }
+
+// keep time import used for future actual log fetching
+var _ = time.Now
+var _ = fmt.Sprintf

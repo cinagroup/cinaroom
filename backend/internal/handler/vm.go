@@ -1,23 +1,22 @@
 package handler
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/cinagroup/cinaseek/backend/internal/config"
-	"github.com/cinagroup/cinaseek/backend/internal/model"
-	"github.com/cinagroup/cinaseek/backend/internal/repository"
+	"github.com/cinagroup/cinaseek/backend/internal/service"
 	"github.com/cinagroup/cinaseek/backend/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
 
 type VMHandler struct {
-	cfg *config.Config
+	cfg       *config.Config
+	vmService *service.VMService
 }
 
-func NewVMHandler(cfg *config.Config) *VMHandler {
-	return &VMHandler{cfg: cfg}
+func NewVMHandler(cfg *config.Config, vmService *service.VMService) *VMHandler {
+	return &VMHandler{cfg: cfg, vmService: vmService}
 }
 
 // ListVMs 获取虚拟机列表
@@ -28,37 +27,26 @@ func (h *VMHandler) ListVMs(c *gin.Context) {
 		return
 	}
 
-	db := repository.GetDB()
-
-	// 获取查询参数
-	name := c.Query("name")
-	status := c.Query("status")
-	pageStr := c.DefaultQuery("page", "1")
-	pageSizeStr := c.DefaultQuery("page_size", "10")
-
-	page, _ := strconv.Atoi(pageStr)
-	pageSize, _ := strconv.Atoi(pageSizeStr)
-
-	// 构建查询
-	query := db.Model(&model.VM{}).Where("user_id = ?", userID)
-
-	if name != "" {
-		query = query.Where("name LIKE ?", "%"+name+"%")
+	req := &service.ListVMsRequest{
+		Name:     c.Query("name"),
+		Status:   c.Query("status"),
+		Page:     0,
+		PageSize: 0,
 	}
-	if status != "" {
-		query = query.Where("status = ?", status)
+	if pageStr := c.DefaultQuery("page", "1"); pageStr != "" {
+		req.Page, _ = strconv.Atoi(pageStr)
+	}
+	if pageSizeStr := c.DefaultQuery("page_size", "10"); pageSizeStr != "" {
+		req.PageSize, _ = strconv.Atoi(pageSizeStr)
 	}
 
-	// 获取总数
-	var total int64
-	query.Count(&total)
+	vms, total, err := h.vmService.ListVMs(userID.(uint), req)
+	if err != nil {
+		response.InternalError(c, "查询失败："+err.Error())
+		return
+	}
 
-	// 分页查询
-	var vms []model.VM
-	offset := (page - 1) * pageSize
-	query.Offset(offset).Limit(pageSize).Order("created_at DESC").Find(&vms)
-
-	response.SuccessWithPage(c, vms, total, page, pageSize)
+	response.SuccessWithPage(c, vms, total, req.Page, req.PageSize)
 }
 
 // GetVMDetail 获取虚拟机详情
@@ -69,17 +57,19 @@ func (h *VMHandler) GetVMDetail(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	db := repository.GetDB()
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	vm, err := h.vmService.GetVM(uint(vmID), userID.(uint))
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		response.InternalError(c, "查询失败："+err.Error())
 		return
 	}
 
@@ -94,68 +84,17 @@ func (h *VMHandler) CreateVM(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		Name        string `json:"name" binding:"required,max=100"`
-		Image       string `json:"image" binding:"required"`
-		CPU         int    `json:"cpu" binding:"min=1,max=8"`
-		Memory      int    `json:"memory" binding:"min=1,max=16"`
-		Disk        int    `json:"disk" binding:"min=10,max=500"`
-		NetworkType string `json:"network_type"`
-		SSHKey      string `json:"ssh_key"`
-		InitScript  string `json:"init_script"`
-	}
-
+	var req service.CreateVMRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "参数错误："+err.Error())
 		return
 	}
 
-	// 设置默认值
-	if req.NetworkType == "" {
-		req.NetworkType = "nat"
-	}
-	if req.CPU < 1 {
-		req.CPU = 1
-	}
-	if req.Memory < 1 {
-		req.Memory = 1
-	}
-	if req.Disk < 10 {
-		req.Disk = 10
-	}
-
-	db := repository.GetDB()
-
-	// 创建虚拟机
-	vm := model.VM{
-		UserID:      userID.(uint),
-		Name:        req.Name,
-		Status:      "stopped",
-		Image:       req.Image,
-		CPU:         req.CPU,
-		Memory:      req.Memory,
-		Disk:        req.Disk,
-		NetworkType: req.NetworkType,
-		SSHKey:      req.SSHKey,
-		InitScript:  req.InitScript,
-	}
-
-	if err := db.Create(&vm).Error; err != nil {
+	vm, err := h.vmService.CreateVM(userID.(uint), &req)
+	if err != nil {
 		response.InternalError(c, "创建失败："+err.Error())
 		return
 	}
-
-	// TODO: 这里应该调用 multipass CLI 实际创建虚拟机
-	// 例如：multipass launch --name <name> --cpus <cpu> --memory <memory>G --disk <disk>G <image>
-
-	// 记录日志
-	vmLog := model.VMLog{
-		VMID:      vm.ID,
-		Operation: "create",
-		Result:    "success",
-		Message:   fmt.Sprintf("创建虚拟机：%s", vm.Name),
-	}
-	db.Create(&vmLog)
 
 	response.SuccessWithMessage(c, "虚拟机创建成功", vm)
 }
@@ -168,85 +107,32 @@ func (h *VMHandler) OperateVM(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	var req struct {
-		Operation string `json:"operation" binding:"required"` // start, stop, restart, pause, resume, delete
-	}
-
+	var req service.OperateVMRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "参数错误")
 		return
 	}
 
-	db := repository.GetDB()
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	if err := h.vmService.OperateVM(uint(vmID), userID.(uint), &req); err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		if err == service.ErrVMOperationFail {
+			response.InternalError(c, "虚拟机操作失败")
+			return
+		}
+		response.InternalError(c, err.Error())
 		return
 	}
 
-	// 执行操作
-	var result string
-	var message string
-
-	switch req.Operation {
-	case "start":
-		// TODO: 调用 multipass start <name>
-		vm.Status = "running"
-		result = "success"
-		message = "虚拟机已启动"
-	case "stop":
-		// TODO: 调用 multipass stop <name>
-		vm.Status = "stopped"
-		result = "success"
-		message = "虚拟机已停止"
-	case "restart":
-		// TODO: 调用 multipass restart <name>
-		vm.Status = "running"
-		result = "success"
-		message = "虚拟机已重启"
-	case "pause":
-		// TODO: 调用 multipass suspend <name>
-		vm.Status = "paused"
-		result = "success"
-		message = "虚拟机已暂停"
-	case "resume":
-		// TODO: 调用 multipass recover <name>
-		vm.Status = "running"
-		result = "success"
-		message = "虚拟机已恢复"
-	case "delete":
-		// TODO: 调用 multipass delete <name> 和 multipass purge <name>
-		result = "success"
-		message = "虚拟机已删除"
-	default:
-		response.BadRequest(c, "不支持的操作")
-		return
-	}
-
-	// 更新数据库
-	if req.Operation != "delete" {
-		db.Save(&vm)
-	} else {
-		db.Delete(&vm)
-	}
-
-	// 记录日志
-	vmLog := model.VMLog{
-		VMID:      vm.ID,
-		Operation: req.Operation,
-		Result:    result,
-		Message:   message,
-	}
-	db.Create(&vmLog)
-
-	response.SuccessWithMessage(c, message, nil)
+	response.SuccessWithMessage(c, "操作成功", nil)
 }
 
 // UpdateVMConfig 更新虚拟机配置
@@ -257,57 +143,27 @@ func (h *VMHandler) UpdateVMConfig(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	var req struct {
-		CPU    int `json:"cpu" binding:"omitempty,min=1,max=8"`
-		Memory int `json:"memory" binding:"omitempty,min=1,max=16"`
-		Disk   int `json:"disk" binding:"omitempty,min=10,max=500"`
-	}
-
+	var req service.UpdateVMConfigRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "参数错误")
 		return
 	}
 
-	db := repository.GetDB()
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	vm, err := h.vmService.UpdateVMConfig(uint(vmID), userID.(uint), &req)
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		response.InternalError(c, "更新失败："+err.Error())
 		return
 	}
-
-	// 更新配置
-	if req.CPU > 0 {
-		vm.CPU = req.CPU
-	}
-	if req.Memory > 0 {
-		vm.Memory = req.Memory
-	}
-	if req.Disk > 0 {
-		vm.Disk = req.Disk
-	}
-
-	if err := db.Save(&vm).Error; err != nil {
-		response.InternalError(c, "更新失败")
-		return
-	}
-
-	// TODO: 这里应该调用 multipass set <name>.cpus/memory/disc 实际修改配置
-
-	// 记录日志
-	vmLog := model.VMLog{
-		VMID:      vm.ID,
-		Operation: "update_config",
-		Result:    "success",
-		Message:   fmt.Sprintf("更新配置：CPU=%d, Memory=%d, Disk=%d", vm.CPU, vm.Memory, vm.Disk),
-	}
-	db.Create(&vmLog)
 
 	response.SuccessWithMessage(c, "配置更新成功", vm)
 }
@@ -320,50 +176,27 @@ func (h *VMHandler) CreateSnapshot(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	var req struct {
-		Name string `json:"name" binding:"required,max=100"`
-	}
-
+	var req service.CreateSnapshotRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "参数错误")
 		return
 	}
 
-	db := repository.GetDB()
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	snapshot, err := h.vmService.CreateSnapshot(uint(vmID), userID.(uint), &req)
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		response.InternalError(c, "创建快照失败："+err.Error())
 		return
 	}
-
-	// 创建快照
-	snapshot := model.VMSnapshot{
-		VMID: vm.ID,
-		Name: req.Name,
-	}
-
-	if err := db.Create(&snapshot).Error; err != nil {
-		response.InternalError(c, "创建快照失败")
-		return
-	}
-
-	// TODO: 这里应该调用 multipass snapshot <name> 实际创建快照
-
-	// 记录日志
-	vmLog := model.VMLog{
-		VMID:      vm.ID,
-		Operation: "create_snapshot",
-		Result:    "success",
-		Message:   fmt.Sprintf("创建快照：%s", req.Name),
-	}
-	db.Create(&vmLog)
 
 	response.SuccessWithMessage(c, "快照创建成功", snapshot)
 }
@@ -376,26 +209,19 @@ func (h *VMHandler) ListSnapshots(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	db := repository.GetDB()
-	
-	// 验证虚拟机归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
-		return
-	}
-
-	// 获取快照列表
-	var snapshots []model.VMSnapshot
-	if err := db.Where("vm_id = ?", vmID).Order("created_at DESC").Find(&snapshots).Error; err != nil {
-		response.InternalError(c, "查询失败")
+	snapshots, err := h.vmService.ListSnapshots(uint(vmID), userID.(uint))
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		response.InternalError(c, "查询失败："+err.Error())
 		return
 	}
 
@@ -410,47 +236,30 @@ func (h *VMHandler) RestoreSnapshot(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	var req struct {
-		SnapshotID uint `json:"snapshot_id" binding:"required"`
-	}
-
+	var req service.RestoreSnapshotRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "参数错误")
 		return
 	}
 
-	db := repository.GetDB()
-	
-	// 验证虚拟机和快照归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	if err := h.vmService.RestoreSnapshot(uint(vmID), userID.(uint), &req); err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		if err == service.ErrSnapshotNotFound {
+			response.NotFound(c, "快照不存在")
+			return
+		}
+		response.InternalError(c, err.Error())
 		return
 	}
-
-	var snapshot model.VMSnapshot
-	if err := db.Where("id = ? AND vm_id = ?", req.SnapshotID, vmID).First(&snapshot).Error; err != nil {
-		response.NotFound(c, "快照不存在")
-		return
-	}
-
-	// TODO: 这里应该调用 multipass restore <name> <snapshot> 实际恢复快照
-
-	// 记录日志
-	vmLog := model.VMLog{
-		VMID:      vm.ID,
-		Operation: "restore_snapshot",
-		Result:    "success",
-		Message:   fmt.Sprintf("恢复快照：%s", snapshot.Name),
-	}
-	db.Create(&vmLog)
 
 	response.SuccessWithMessage(c, "快照恢复成功", nil)
 }
@@ -463,48 +272,30 @@ func (h *VMHandler) DeleteSnapshot(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	snapshotIDStr := c.Param("snapshot_id")
-	snapshotID, err := strconv.ParseUint(snapshotIDStr, 10, 32)
+	snapshotID, err := strconv.ParseUint(c.Param("snapshot_id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的快照 ID")
 		return
 	}
 
-	db := repository.GetDB()
-	
-	// 验证虚拟机和快照归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
+	if err := h.vmService.DeleteSnapshot(uint(vmID), uint(snapshotID), userID.(uint)); err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		if err == service.ErrSnapshotNotFound {
+			response.NotFound(c, "快照不存在")
+			return
+		}
+		response.InternalError(c, err.Error())
 		return
 	}
-
-	var snapshot model.VMSnapshot
-	if err := db.Where("id = ? AND vm_id = ?", uint(snapshotID), vmID).First(&snapshot).Error; err != nil {
-		response.NotFound(c, "快照不存在")
-		return
-	}
-
-	// TODO: 这里应该调用 multipass delete-snapshot <name> <snapshot> 实际删除快照
-
-	// 删除数据库记录
-	db.Delete(&snapshot)
-
-	// 记录日志
-	vmLog := model.VMLog{
-		VMID:      vm.ID,
-		Operation: "delete_snapshot",
-		Result:    "success",
-		Message:   fmt.Sprintf("删除快照：%s", snapshot.Name),
-	}
-	db.Create(&vmLog)
 
 	response.SuccessWithMessage(c, "快照删除成功", nil)
 }
@@ -517,26 +308,26 @@ func (h *VMHandler) GetVMLogs(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	db := repository.GetDB()
-	
-	// 验证虚拟机归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
-		return
+	limit := 100
+	if l := c.Query("limit"); l != "" {
+		if v, e := strconv.Atoi(l); e == nil && v > 0 {
+			limit = v
+		}
 	}
 
-	// 获取日志列表
-	var logs []model.VMLog
-	if err := db.Where("vm_id = ?", vmID).Order("created_at DESC").Limit(100).Find(&logs).Error; err != nil {
-		response.InternalError(c, "查询失败")
+	logs, err := h.vmService.GetVMLogs(uint(vmID), userID.(uint), limit)
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		response.InternalError(c, "查询失败："+err.Error())
 		return
 	}
 
@@ -551,26 +342,26 @@ func (h *VMHandler) GetVMMetrics(c *gin.Context) {
 		return
 	}
 
-	vmIDStr := c.Param("id")
-	vmID, err := strconv.ParseUint(vmIDStr, 10, 32)
+	vmID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
 		response.BadRequest(c, "无效的虚拟机 ID")
 		return
 	}
 
-	db := repository.GetDB()
-	
-	// 验证虚拟机归属
-	var vm model.VM
-	if err := db.Where("id = ? AND user_id = ?", uint(vmID), userID).First(&vm).Error; err != nil {
-		response.NotFound(c, "虚拟机不存在")
-		return
+	limit := 100
+	if l := c.Query("limit"); l != "" {
+		if v, e := strconv.Atoi(l); e == nil && v > 0 {
+			limit = v
+		}
 	}
 
-	// 获取最近的监控数据
-	var metrics []model.VMMetric
-	if err := db.Where("vm_id = ?", vmID).Order("timestamp DESC").Limit(100).Find(&metrics).Error; err != nil {
-		response.InternalError(c, "查询失败")
+	metrics, err := h.vmService.GetVMMetrics(uint(vmID), userID.(uint), limit)
+	if err != nil {
+		if err == service.ErrVMNotFound {
+			response.NotFound(c, "虚拟机不存在")
+			return
+		}
+		response.InternalError(c, "查询失败："+err.Error())
 		return
 	}
 
