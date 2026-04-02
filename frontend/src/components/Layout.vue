@@ -18,7 +18,7 @@
           <span>虚拟机管理</span>
         </el-menu-item>
         <el-menu-item index="/shell">
-          <el-icon><Terminal /></el-icon>
+          <el-icon><FullScreen /></el-icon>
           <span>WebShell</span>
         </el-menu-item>
         <el-menu-item index="/mounts">
@@ -93,7 +93,7 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import {
-  Monitor, Terminal, Folder, Setting, Link, User, Lock,
+  Monitor, FullScreen, Folder, Setting, Link, User, Lock,
   Fold, Expand, SwitchButton
 } from '@element-plus/icons-vue'
 

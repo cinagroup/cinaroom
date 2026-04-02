@@ -10,10 +10,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/cinagroup/cinaseek/backend/internal/cinaclaw"
 	"github.com/cinagroup/cinaseek/backend/internal/config"
 	"github.com/cinagroup/cinaseek/backend/internal/handler"
 	"github.com/cinagroup/cinaseek/backend/internal/middleware"
 	"github.com/cinagroup/cinaseek/backend/internal/repository"
+	"github.com/cinagroup/cinaseek/backend/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -40,12 +42,20 @@ func main() {
 	r.Use(middleware.CORS(&cfg.CORS))
 	r.Use(gin.Recovery())
 
+	// 创建 gRPC 客户端管理器
+	clientMgr := cinaclaw.NewClientManager("/var/run/cinaclaw.sock")
+
+	// 创建服务层
+	vmService := service.NewVMService(clientMgr)
+	mountService := service.NewMountService(clientMgr)
+	openclawService := service.NewOpenClawService(clientMgr)
+
 	// 创建处理器
 	authHandler := handler.NewAuthHandler(cfg)
 	oauthHandler := handler.NewOAuthHandler(cfg)
-	vmHandler := handler.NewVMHandler(cfg)
-	mountHandler := handler.NewMountHandler(cfg)
-	openclawHandler := handler.NewOpenClawHandler(cfg)
+	vmHandler := handler.NewVMHandler(cfg, vmService)
+	mountHandler := handler.NewMountHandler(cfg, mountService)
+	openclawHandler := handler.NewOpenClawHandler(cfg, openclawService)
 	remoteHandler := handler.NewRemoteHandler(cfg)
 	systemHandler := handler.NewSystemHandler(cfg)
 

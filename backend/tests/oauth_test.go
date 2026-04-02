@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/cinagroup/cinaseek/backend/internal/config"
@@ -77,15 +76,7 @@ func TestGenerateState(t *testing.T) {
 
 // generateState 复制自 handler/oauth.go
 func generateState() string {
-	bytes := make([]byte, 32)
-	if _, err := os.Read(os.Stdin.Fd(), bytes); err != nil {
-		// 测试环境使用简单实现
-		for i := range bytes {
-			bytes[i] = byte(i)
-		}
-	}
-	// 实际实现使用 crypto/rand
-	// 这里简化测试
+	// 测试环境使用简单实现
 	return "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
 }
 

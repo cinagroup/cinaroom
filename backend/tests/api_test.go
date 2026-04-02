@@ -7,10 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/cinagroup/cinaseek/backend/internal/cinaclaw"
 	"github.com/cinagroup/cinaseek/backend/internal/config"
 	"github.com/cinagroup/cinaseek/backend/internal/handler"
 	"github.com/cinagroup/cinaseek/backend/internal/middleware"
 	"github.com/cinagroup/cinaseek/backend/internal/repository"
+	"github.com/cinagroup/cinaseek/backend/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -35,7 +37,9 @@ func TestMain(m *testing.M) {
 
 	// 创建处理器
 	authHandler := handler.NewAuthHandler(cfg)
-	vmHandler := handler.NewVMHandler(cfg)
+	clientMgr := cinaclaw.NewClientManager("/var/run/cinaclaw.sock")
+	vmService := service.NewVMService(clientMgr)
+	vmHandler := handler.NewVMHandler(cfg, vmService)
 
 	// 注册测试路由
 	auth := router.Group("/api/v1/auth")

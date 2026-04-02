@@ -34,7 +34,7 @@
 
       <!-- Two-Factor Auth -->
       <el-divider content-position="left">
-        <el-icon><Shield /></el-icon>两步验证
+        <el-icon><Key /></el-icon>两步验证
       </el-divider>
       <div class="security-item">
         <div>
@@ -106,7 +106,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Lock, Shield, Document, Connection } from '@element-plus/icons-vue'
+import { Lock, Key, Document, Connection } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
   changePassword,
