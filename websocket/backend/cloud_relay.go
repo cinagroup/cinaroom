@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
+	"bytes"
 	"log"
 	"net/http"
 	"net/url"
@@ -15,6 +15,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool { return true },
+}
 // CloudRelay 云端中转服务
 type CloudRelay struct {
 	mu            sync.RWMutex
@@ -289,7 +293,7 @@ func (cr *CloudRelay) HandleForward(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
-	forwardReq, err := http.NewRequestWithContext(ctx, req.Method, req.TargetURL, []byte(req.Body))
+	forwardReq, err := http.NewRequestWithContext(ctx, req.Method, req.TargetURL, bytes.NewReader([]byte(req.Body)))
 	if err != nil {
 		http.Error(w, "Failed to create request", http.StatusInternalServerError)
 		return
