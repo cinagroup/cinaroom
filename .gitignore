@@ -29,3 +29,10 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Build output
+bin/
+build/output/
+*.exe
+backend/client
+backend/server

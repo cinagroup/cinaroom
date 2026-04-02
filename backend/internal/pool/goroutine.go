@@ -15,7 +15,7 @@ type GoroutinePool struct {
 	taskQueue chan func()
 	wg        sync.WaitGroup
 	closeOnce sync.Once
-	closed    chan struct{}
+	stopCh    chan struct{}
 }
 
 // NewGoroutinePool creates a pool with the given number of workers.
@@ -27,7 +27,7 @@ func NewGoroutinePool(maxWorkers int) *GoroutinePool {
 	p := &GoroutinePool{
 		workers:   maxWorkers,
 		taskQueue: make(chan func(), maxWorkers*2),
-		closed:    make(chan struct{}),
+		stopCh:    make(chan struct{}),
 	}
 	p.start()
 	return p
@@ -44,20 +44,11 @@ func (p *GoroutinePool) start() {
 // worker reads tasks from the queue and executes them.
 func (p *GoroutinePool) worker() {
 	defer p.wg.Done()
-	for {
-		select {
-		case <-p.closed:
-			// Drain remaining tasks before exiting.
-			for task := range p.taskQueue {
-				safeExec(task)
-			}
+	for task := range p.taskQueue {
+		if task == nil {
 			return
-		case task, ok := <-p.taskQueue:
-			if !ok {
-				return
-			}
-			safeExec(task)
 		}
+		safeExec(task)
 	}
 }
 
@@ -68,14 +59,14 @@ func (p *GoroutinePool) Submit(fn func()) error {
 		return nil
 	}
 	select {
-	case <-p.closed:
+	case <-p.stopCh:
 		return ErrPoolClosed
 	default:
 	}
 	select {
 	case p.taskQueue <- fn:
 		return nil
-	case <-p.closed:
+	case <-p.stopCh:
 		return ErrPoolClosed
 	}
 }
@@ -84,7 +75,12 @@ func (p *GoroutinePool) Submit(fn func()) error {
 // waits for all in-flight tasks to complete.
 func (p *GoroutinePool) Stop() {
 	p.closeOnce.Do(func() {
-		close(p.closed)
+		close(p.stopCh)
+		// Send nil sentinels to wake all workers so they exit the range loop
+		// after draining remaining real tasks.
+		for i := 0; i < p.workers; i++ {
+			p.taskQueue <- nil
+		}
 		p.wg.Wait()
 	})
 }

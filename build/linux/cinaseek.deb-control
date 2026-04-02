@@ -1,0 +1,10 @@
+Package: cinaseek
+Version: 1.0.0
+Section: devel
+Priority: optional
+Architecture: amd64
+Depends: libc6 (>= 2.31)
+Maintainer: CinaGroup <dev@cinagroup.com>
+Description: CinaSeek - 轻量虚拟机 Web 管理平台
+ 基于 Multipass 定制的 Ubuntu 虚拟机远程管理平台，
+ 支持 OpenClaw AI 开发环境一键部署。

@@ -1,0 +1,30 @@
+# === Build Stage ===
+FROM golang:1.22-alpine AS builder
+
+RUN apk add --no-cache git ca-certificates
+
+WORKDIR /build
+
+# Cache dependencies
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+# Copy source and build
+COPY backend/ ./
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -ldflags="-s -w -X main.Version=$(cat VERSION 2>/dev/null || echo dev)" \
+    -o cinaseek-server ./cmd/server/
+
+# === Runtime Stage ===
+FROM alpine:3.19
+
+RUN apk add --no-cache ca-certificates tzdata
+WORKDIR /app
+
+COPY --from=builder /build/cinaseek-server .
+COPY backend/migrations/ ./migrations/
+COPY backend/.env.example ./.env
+
+EXPOSE 8080
+
+ENTRYPOINT ["./cinaseek-server"]

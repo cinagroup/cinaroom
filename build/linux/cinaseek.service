@@ -1,0 +1,12 @@
+[Unit]
+Description=CinaSeek Client Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/cinaseek-client
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
