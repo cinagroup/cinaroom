@@ -481,6 +481,11 @@ func (s *VMService) GetVMDashboard(userID uint) (map[string]interface{}, error) 
 	}, nil
 }
 
+// CountVMs returns the number of VMs for a user.
+func (s *VMService) CountVMs(userID uint) (int64, error) {
+	return s.vmRepo.CountByUser(userID, "")
+}
+
 // logOperation is a helper to record a VM operation log.
 func (s *VMService) logOperation(vmID uint, operation, result, message string) {
 	if err := s.vmLogRepo.Create(&model.VMLog{

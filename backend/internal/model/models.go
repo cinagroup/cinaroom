@@ -204,6 +204,21 @@ type SystemSetting struct {
 // TableName specifies the table name for SystemSetting.
 func (SystemSetting) TableName() string { return "system_settings" }
 
+// Subscription 用户订阅
+type Subscription struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserID    uint      `gorm:"not null;index" json:"user_id"`
+	Plan      string    `gorm:"size:20;not null;default:'free'" json:"plan"`      // free, pro, enterprise
+	Status    string    `gorm:"size:20;not null;default:'active'" json:"status"`  // active, expired, cancelled
+	StartedAt time.Time `json:"started_at"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// TableName specifies the table name for Subscription.
+func (Subscription) TableName() string { return "subscriptions" }
+
 // VMMetric stores a point-in-time resource usage sample for a VM.
 type VMMetric struct {
 	ID          uint      `gorm:"primaryKey" json:"id" form:"id"`

@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"net/http"
 	"strconv"
 
 	"github.com/cinagroup/cinaseek/backend/internal/config"
+	"github.com/cinagroup/cinaseek/backend/internal/quota"
 	"github.com/cinagroup/cinaseek/backend/internal/service"
 	"github.com/cinagroup/cinaseek/backend/pkg/response"
 
@@ -87,6 +89,18 @@ func (h *VMHandler) CreateVM(c *gin.Context) {
 	var req service.CreateVMRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, "参数错误："+err.Error())
+		return
+	}
+
+	// 配额检查
+	plan := "free" // TODO: 从用户订阅获取
+	currentVMCount, err := h.vmService.CountVMs(userID.(uint))
+	if err != nil {
+		response.InternalError(c, "查询配额失败："+err.Error())
+		return
+	}
+	if err := quota.CheckQuota(plan, "vms", int(currentVMCount)); err != nil {
+		response.Error(c, http.StatusPaymentRequired, err.Error(), nil)
 		return
 	}
 
