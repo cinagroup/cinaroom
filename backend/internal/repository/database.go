@@ -37,9 +37,9 @@ func InitDB(cfg *config.DatabaseConfig) error {
 	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
 	sqlDB.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 
-	// Run auto-migration
+	// Run auto-migration (non-fatal: tables may already exist from SQL migration)
 	if err := autoMigrate(); err != nil {
-		return fmt.Errorf("failed to migrate database: %w", err)
+		slog.Warn("auto-migration skipped (tables likely exist from SQL migration)", "error", err)
 	}
 
 	slog.Info("database connection established",

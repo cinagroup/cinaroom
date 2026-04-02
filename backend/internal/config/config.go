@@ -83,7 +83,7 @@ func Load() *Config {
 			User:            getEnv("DB_USER", "cinaseek"),
 			Password:        getEnv("DB_PASSWORD", "cinaseek"),
 			DBName:          getEnv("DB_NAME", "cinatoken"),
-			Schema:          getEnv("DB_SCHEMA", "cinaseek"),
+			Schema:          getEnv("DB_SCHEMA", "public"),
 			SSLMode:         getEnv("DB_SSLMODE", "disable"),
 			MaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", 10),
 			MaxOpenConns:    getEnvInt("DB_MAX_OPEN_CONNS", 100),
